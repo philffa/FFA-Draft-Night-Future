@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FFA Draft 2026 — Men's Division Live Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000;
+    --surface: #0a0a0a;
+    --surface2: #111;
+    --border: rgba(255,255,255,0.12);
+    --border-strong: rgba(255,255,255,0.25);
+    --text: #ffffff;
+    --muted: #888;
+    --accent: #f97316;
+    --accent-dim: #f9731644;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  /* Header */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem; border-bottom: 2px solid var(--accent);
+    background: var(--surface);
+  }
+  .header-left h1 {
+    font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem;
+    color: var(--accent); letter-spacing: 0.1em; line-height: 1;
+  }
+  .header-left p { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 3px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: #ef4444; color: #fff; padding: 6px 16px;
+    border-radius: 4px; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+  /* Latest pick banner */
+  .latest-pick {
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem; display: flex; align-items: center; gap: 2rem;
+    min-height: 90px;
+  }
+  .latest-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .latest-announcement {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem;
+    letter-spacing: 0.04em; color: #fff; flex: 1; line-height: 1.2;
+  }
+  .latest-announcement .hl { color: var(--accent); }
+  .latest-pick-num {
+    font-family: 'Bebas Neue', sans-serif; font-size: 3rem;
+    color: var(--accent); line-height: 1; min-width: 80px; text-align: center;
+    border-right: 1px solid var(--border); padding-right: 2rem;
+  }
+  .latest-pick-num span { display: block; font-size: 0.65rem; font-family: 'DM Sans', sans-serif; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* Board grid */
+  .board { padding: 1.25rem 2rem; }
+  .round-block { margin-bottom: 1.25rem; }
+  .round-header {
+    font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem;
+    letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase;
+    padding: 4px 0; border-bottom: 1px solid var(--border); margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .round-header.rookie-hdr { color: #22d3ee; border-bottom-color: #22d3ee44; }
+  .round-header .rd-num { color: var(--accent); font-size: 1.1rem; }
+  .picks-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .pick-cell {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 8px 10px; min-height: 64px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .pick-cell.filled { background: #0f1a0f; border-color: rgba(255,255,255,0.15); }
+  .pick-cell.latest { background: var(--accent-dim); border-color: var(--accent); animation: flash 1s ease-out; }
+  .pick-cell.rookie { background: rgba(34,211,238,0.05); border-color: rgba(34,211,238,0.2); }
+  .pick-cell.rookie.filled { background: rgba(34,211,238,0.1); border-color: rgba(34,211,238,0.4); }
+  @keyframes flash { 0% { background: var(--accent); } 100% { background: var(--accent-dim); } }
+  .cell-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .cell-pick-num { font-size: 0.65rem; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .cell-team { font-size: 0.65rem; color: var(--accent); font-weight: 500; text-align: right; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cell-player { font-size: 0.82rem; font-weight: 500; color: #fff; margin-top: 6px; line-height: 1.2; }
+  .cell-pos { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+  .cell-empty { font-size: 0.7rem; color: #333; margin-top: 6px; }
+
+  .connecting { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; letter-spacing: 0.05em; }
+  .order-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding: 0.75rem 2rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .order-cell { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; border-top: 3px solid var(--team-color); }
+  .order-pick-num { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+  .order-team-name { font-size: 0.82rem; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .order-strip-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 0.4rem 2rem 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>FFA Draft 2026 — Men's Division</h1>
+    <p>10 Rounds + U18 Rookie Round · 6 Teams · Snake Draft</p>
+  </div>
+  <div class="live-badge"><div class="live-dot"></div>Live</div>
+</div>
+
+<div class="latest-pick" id="latest-pick">
+  <div class="latest-pick-num" id="latest-num"><span>Pick</span>—</div>
+  <div>
+    <div class="latest-label">Most recent pick</div>
+    <div class="latest-announcement" id="latest-announcement">Waiting for first pick...</div>
+  </div>
+</div>
+
+<div class="order-strip-label">Round 1 draft order</div>
+<div class="order-strip" id="order-strip">
+  <!-- populated by JS -->
+</div>
+<div class="board" id="board">
+  <div class="connecting">Connecting to live draft feed...</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const fbApp = initializeApp({
+  apiKey: "AIzaSyCFdWwwTdPi42oAntUszwWFQL4WFaJS9IQ",
+  databaseURL: "https://ffa-draft-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ffa-draft",
+  appId: "1:849324499106:web:9893151b2298198fe437fb"
+});
+const db = getDatabase(fbApp);
+
+const ROUNDS = 10;
+const TEAMS = 6;
+const ROOKIE_ROUND = 10;
+const TEAM_COLORS = ['#f97316','#22d3ee','#a78bfa','#34d399','#fb7185','#fbbf24'];
+
+function ord(n) { return ['st','nd','rd'][((n+90)%100-10)%10-1]||'th'; }
+function isRookie(r) { return ROOKIE_ROUND && r === ROOKIE_ROUND; }
+
+let teamNames = Array.from({length: TEAMS}, (_, i) => 'Team ' + (i+1));
+let picks = [];
+let latestOverall = 0;
+
+function snakeOrder() {
+  picks = [];
+  let overall = 1;
+  for (let r = 1; r <= ROUNDS; r++) {
+    const slots = r % 2 === 1
+      ? Array.from({length:TEAMS},(_,i)=>i)
+      : Array.from({length:TEAMS},(_,i)=>TEAMS-1-i);
+    for (let p = 0; p < TEAMS; p++) {
+      picks.push({ overall, round: r, pickInRound: p+1, teamSlot: slots[p], player:'', position:'' });
+      overall++;
+    }
+  }
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  let currentRound = 0;
+  let roundDiv, picksRow;
+
+  picks.forEach(p => {
+    if (p.round !== currentRound) {
+      currentRound = p.round;
+      roundDiv = document.createElement('div');
+      roundDiv.className = 'round-block';
+      const hdr = document.createElement('div');
+      hdr.className = 'round-header' + (isRookie(p.round) ? ' rookie-hdr' : '');
+      hdr.innerHTML = `<span class="rd-num">Round ${p.round}</span>${isRookie(p.round) ? '<span>U18 Rookie</span>' : ''}`;
+      picksRow = document.createElement('div');
+      picksRow.className = 'picks-row';
+      roundDiv.appendChild(hdr);
+      roundDiv.appendChild(picksRow);
+      board.appendChild(roundDiv);
+    }
+    const cell = document.createElement('div');
+    const isLatest = p.overall === latestOverall;
+    cell.className = 'pick-cell' + (p.player ? ' filled' : '') + (isLatest ? ' latest' : '') + (isRookie(p.round) ? ' rookie' : '');
+    cell.id = 'pick-' + p.overall;
+    const team = teamNames[p.teamSlot] || 'Team ' + (p.teamSlot+1);
+    cell.innerHTML = `
+      <div class="cell-top">
+        <span class="cell-pick-num">#${p.overall}</span>
+        <span class="cell-team" style="color:${TEAM_COLORS[p.teamSlot]}">${team}</span>
+      </div>
+      ${p.player
+        ? `<div class="cell-player">${p.player}</div><div class="cell-pos">${p.position || ''}</div>`
+        : `<div class="cell-empty">On the clock</div>`
+      }
+    `;
+    picksRow.appendChild(cell);
+  });
+}
+
+function updateLatestBanner() {
+  const latest = [...picks].reverse().find(p => p.player);
+  if (!latest) return;
+  latestOverall = latest.overall;
+  const team = teamNames[latest.teamSlot] || 'Team ' + (latest.teamSlot+1);
+  const rookiePart = isRookie(latest.round) ? ', <span class="hl">U18 Rookie</span>' : '';
+  document.getElementById('latest-num').innerHTML = `<span>Pick</span>${latest.overall}`;
+  document.getElementById('latest-announcement').innerHTML =
+    `With the <span class="hl">${latest.pickInRound}${ord(latest.pickInRound)} pick of Round ${latest.round}</span>, <span class="hl">${team}</span> selects <span class="hl">${latest.player}</span>, ${latest.position || '—'}${rookiePart}.`;
+}
+
+// Listen to draft board state from Firebase
+onValue(ref(db, 'stream/mens'), snapshot => {
+  const data = snapshot.val();
+  if (!data) return;
+
+  if (data.teams) teamNames = data.teams;
+  if (data.picks) {
+    snakeOrder();
+    // Overlay saved pick data onto snake order
+    Object.entries(data.picks).forEach(([key, val]) => {
+      const idx = parseInt(key);
+      if (picks[idx]) {
+        picks[idx].player = val.player || '';
+        picks[idx].position = val.position || '';
+        picks[idx].teamSlot = val.teamSlot !== undefined ? val.teamSlot : picks[idx].teamSlot;
+      }
+    });
+  } else {
+    snakeOrder();
+  }
+
+  updateLatestBanner();
+  renderOrderStrip();
+  renderBoard();
+
+  // Scroll latest pick into view
+  setTimeout(() => {
+    const el = document.getElementById('pick-' + latestOverall);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+});
+
+
+function renderOrderStrip() {
+  const strip = document.getElementById('order-strip');
+  if (!strip) return;
+  // baseOrder is round 1 pick order — first 6 picks
+  const round1 = picks.filter(p => p.round === 1);
+  strip.innerHTML = round1.map((p, i) => {
+    const team = teamNames[p.teamSlot] || 'Team ' + (p.teamSlot + 1);
+    const color = TEAM_COLORS[p.teamSlot];
+    return `<div class="order-cell" style="--team-color:${color}">
+      <div class="order-pick-num">Pick ${i + 1}</div>
+      <div class="order-team-name">${team}</div>
+    </div>`;
+  }).join('');
+}
+
+snakeOrder();
+renderOrderStrip();
+renderBoard();
+</script>
+</body>
+</html>

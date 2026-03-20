@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Women's Division — Flag Football Draft Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2230;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.18);
+    --text: #f0f2f7;
+    --muted: #6b7280;
+    --accent: #a78bfa;
+    --accent2: #c4b5fd;
+    --rookie: #22d3ee;
+    --rookie-bg: rgba(34,211,238,0.08);
+    --rookie-border: rgba(34,211,238,0.3);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-titles { flex: 1; }
+  .header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.06em; color: var(--accent); line-height: 1; }
+  .header p { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; margin-top: 3px; }
+
+  .announce-bar {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    padding: 0.7rem 1.25rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-style: italic;
+    flex: 1;
+    border-radius: 0 6px 6px 0;
+    min-width: 0;
+  }
+  .announce-bar b { color: var(--text); font-style: normal; font-weight: 500; }
+
+  .toolbar {
+    padding: 0.75rem 2rem;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .btn {
+    padding: 0.45rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn:hover { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+  .btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.danger:hover { border-color: #ef4444; color: #ef4444; }
+
+  .trade-panel {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: none;
+  }
+  .trade-panel h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.75rem; }
+  select {
+    background: var(--surface2);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .trade-sides { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: start; margin-bottom: 1rem; }
+  .trade-side h4 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 500; }
+  .trade-picks { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+  .trade-pick-row { display: flex; gap: 6px; align-items: center; }
+  .trade-pick-row select { flex: 1; }
+  .trade-arrow { font-size: 1.4rem; color: var(--muted); text-align: center; padding-top: 1.5rem; }
+  .trade-error { font-size: 0.8rem; color: #ef4444; margin-bottom: 0.75rem; min-height: 1.2em; }
+  .btn-small { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+
+  .main { padding: 1.5rem 2rem; }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .team-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    border-top: 3px solid var(--team-color);
+  }
+  .team-card label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
+  .team-card input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    outline: none;
+    padding: 0;
+  }
+  .team-card input:focus { color: var(--accent); }
+  .team-card .gm-name { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  thead th {
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 500;
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-strong);
+    position: sticky;
+    top: 85px;
+  }
+  thead th:nth-child(1), thead th:nth-child(2), thead th:nth-child(3) { width: 52px; text-align: center; }
+  thead th:nth-child(4) { width: 140px; }
+  thead th:nth-child(6) { width: 110px; }
+
+  tbody tr { cursor: pointer; transition: background 0.1s; }
+  tbody tr:hover td { background: var(--surface); }
+  tbody tr.selected td { background: rgba(167,139,250,0.1); }
+  tbody tr.selected td:nth-child(1) { border-left: 3px solid var(--accent); }
+
+  tbody tr.rookie-round td { background: var(--rookie-bg); }
+  tbody tr.rookie-round:hover td { background: rgba(34,211,238,0.12); }
+  tbody tr.rookie-round.selected td { background: rgba(34,211,238,0.18); }
+  tbody tr.rookie-round.selected td:nth-child(1) { border-left: 3px solid var(--rookie); }
+
+  tbody tr.round-start td { border-top: 1px solid var(--border-strong); }
+
+  td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  td:nth-child(1), td:nth-child(2), td:nth-child(3) { text-align: center; color: var(--muted); font-size: 0.75rem; }
+  td:nth-child(2) { font-weight: 600; }
+
+  .team-pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .rookie-badge {
+    display: inline-block;
+    background: var(--rookie-bg);
+    color: var(--rookie);
+    border: 1px solid var(--rookie-border);
+    padding: 1px 7px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .editable {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    outline: none;
+    padding: 0;
+  }
+  .editable:focus { color: #fff; }
+  .editable::placeholder { color: var(--muted); }
+  .editable.duplicate { border-bottom: 2px solid #ef4444; }
+
+  .round-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+  }
+  .rookie-round-label { color: var(--rookie); }
+
+  .order-panel {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: none;
+  }
+  .order-panel h3 { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.25rem; }
+  .order-panel p { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+  .order-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .order-card { background: var(--surface2); border: 1px solid var(--border-strong); border-radius: 8px; padding: 0.6rem 0.75rem; }
+  .order-card label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
+  .order-card select { width: 100%; background: transparent; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; outline: none; cursor: pointer; }
+  .order-error { font-size: 0.8rem; color: #ef4444; margin-bottom: 0.75rem; min-height: 1.2em; }
+  .legend { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .autocomplete-wrap { position: relative; flex: 1; min-width: 0; }
+  .autocomplete-wrap input { width: 100%; }
+  .ac-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border-strong);
+    border-radius: 0 0 6px 6px;
+    z-index: 999;
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
+  }
+  .ac-dropdown.open { display: block; }
+  .ac-option {
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .ac-option:hover, .ac-option.active { background: rgba(167,139,250,0.15); color: var(--accent); }
+
+  .pin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 300; }
+  .pin-card { background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; padding: 2rem; width: 100%; max-width: 380px; text-align: center; }
+  .pin-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--accent); margin-bottom: 0.5rem; letter-spacing: 0.05em; }
+  .pin-card p { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.25rem; }
+  .pin-card input { width: 100%; background: var(--surface2); border: 1px solid var(--border-strong); color: var(--text); padding: 0.6rem 0.85rem; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 1.1rem; letter-spacing: 0.2em; text-align: center; margin-bottom: 0.75rem; outline: none; }
+  .pin-card input:focus { border-color: var(--accent); }
+  .pin-error { font-size: 0.8rem; color: #ef4444; margin-bottom: 0.75rem; min-height: 1em; }
+</style>
+</head>
+<body>
+
+
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-card">
+    <h2>Women's Draft Board</h2>
+    <p>Enter the PIN to access the draft board.</p>
+    <input type="password" id="pin-input" placeholder="····" maxlength="4" onkeydown="if(event.key==='Enter')checkPin()">
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn active" style="width:100%" onclick="checkPin()">Enter</button>
+  </div>
+</div>
+
+<div class="header">
+  <div class="header-titles">
+    <h1>Women's Division</h1>
+    <p>Flag Football Draft &nbsp;·&nbsp; 6 Teams &nbsp;·&nbsp; Snake Draft &nbsp;·&nbsp; 11 Rounds</p>
+  </div>
+  <div class="announce-bar" id="announce-bar">Select a pick to see the draft announcement.</div>
+</div>
+
+<div class="toolbar">
+  <button class="btn" id="order-btn" onclick="toggleOrderPanel()">Set draft order</button>
+  <button class="btn" onclick="resetToBaseOrder()">Reset snake order</button>
+  <button class="btn" id="trade-btn" onclick="toggleTrade()">Swap picks (trade)</button>
+  <button class="btn danger" onclick="clearAll()">Clear all picks</button>
+  <span id="clear-confirm-wrap" style="display:none;align-items:center;gap:6px;">
+    <input id="clear-confirm-input" placeholder='type "clear"' onkeydown="if(event.key==='Enter')clearAll();if(event.key==='Escape'){this.parentElement.style.display='none'}"
+      style="background:var(--surface2);border:1px solid var(--border-strong);color:var(--text);padding:0.4rem 0.75rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.82rem;width:110px;outline:none;">
+    <button class="btn" onclick="clearAll()">Go</button>
+    <button class="btn" onclick="document.getElementById('clear-confirm-wrap').style.display='none'">✕</button>
+  </span>
+  <button class="btn" onclick="copyAnnouncements()">Copy all announcements</button>
+  <button class="btn" onclick="copySummary(this)">Copy draft summary</button>
+</div>
+
+<div class="order-panel" id="order-panel">
+  <h3>Set Draft Order</h3>
+  <p>Assign a team to each draft position, then confirm to lock in the snake order.</p>
+  <div class="order-grid" id="order-grid"></div>
+  <div class="order-error" id="order-error"></div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn active" onclick="confirmDraftOrder()">Confirm order</button>
+    <button class="btn" onclick="toggleOrderPanel()">Cancel</button>
+  </div>
+</div>
+
+<div class="trade-panel" id="trade-panel">
+  <h3>Trade Picks</h3>
+  <div class="trade-sides">
+    <div class="trade-side">
+      <h4>Team A gives</h4>
+      <div class="trade-picks" id="trade-a-picks"></div>
+      <button class="btn btn-small" onclick="addTradePick('a')">+ Add pick</button>
+    </div>
+    <div class="trade-arrow">&#8644;</div>
+    <div class="trade-side">
+      <h4>Team B gives</h4>
+      <div class="trade-picks" id="trade-b-picks"></div>
+      <button class="btn btn-small" onclick="addTradePick('b')">+ Add pick</button>
+    </div>
+  </div>
+  <div class="trade-error" id="trade-error"></div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn active" onclick="executeTrade()">Confirm trade</button>
+    <button class="btn" onclick="toggleTrade()">Cancel</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="team-grid" id="team-grid"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Regular pick</div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Rd</th><th>Pk</th><th>Team</th><th>Player name</th><th>Position</th></tr>
+    </thead>
+    <tbody id="draft-body"></tbody>
+  </table>
+</div>
+
+<script>
+const DIVISION_KEY = 'womens';
+const DIVISION_KEY = 'womens';
+const ROUNDS = 11, TEAMS = 6, ROOKIE_ROUND = null;
+const TEAM_COLORS = ['#f472b6','#a78bfa','#34d399','#fb923c','#60a5fa','#fbbf24'];
+
+const DEFAULT_TEAMS = ['Yeah Nah','Kunoichi','Bad Girls','5 Sheep','Red Flags','Suffragettes'];
+const GM_NAMES = {"Yeah Nah": "Tamika", "Kunoichi": "Natsuko", "Bad Girls": "Courtney", "5 Sheep": "Marissa", "Red Flags": "Denise", "Suffragettes": "Bree"};
+let teams = [...DEFAULT_TEAMS];
+let picks = [];
+let selectedIdx = null;
+
+let baseOrder = Array.from({length:TEAMS},(_,i)=>i);
+
+function snakeOrder() {
+  picks = [];
+  let overall = 1;
+  for (let r = 1; r <= ROUNDS; r++) {
+    let order = r % 2 === 1 ? [...baseOrder] : [...baseOrder].reverse();
+    for (let p = 0; p < TEAMS; p++) {
+      picks.push({ overall, round: r, pickInRound: p+1, teamSlot: order[p], player:'', position:'' });
+      overall++;
+    }
+  }
+}
+
+function resetToBaseOrder() {
+  const saved = picks.map(p => ({ player: p.player, position: p.position }));
+  snakeOrder();
+  picks.forEach((p, i) => { p.player = saved[i].player; p.position = saved[i].position; });
+  renderTable();
+  buildTradeSelects();
+}
+
+function toggleOrderPanel() {
+  const panel = document.getElementById('order-panel');
+  const btn = document.getElementById('order-btn');
+  const open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  btn.classList.toggle('active', !open);
+  if (!open) buildOrderGrid();
+}
+
+function buildOrderGrid() {
+  const grid = document.getElementById('order-grid');
+  grid.innerHTML = '';
+  for (let pos = 0; pos < TEAMS; pos++) {
+    const card = document.createElement('div');
+    card.className = 'order-card';
+    const opts = teams.map((name, i) =>
+      `<option value="${i}" ${baseOrder[pos]===i?'selected':''}>${name}</option>`
+    ).join('');
+    card.innerHTML = `<label>Pick ${pos+1}</label><select id="order-pos-${pos}">${opts}</select>`;
+    grid.appendChild(card);
+  }
+  document.getElementById('order-error').textContent = '';
+}
+
+function confirmDraftOrder() {
+  const errEl = document.getElementById('order-error');
+  const newOrder = Array.from({length:TEAMS}, (_,i) => parseInt(document.getElementById('order-pos-'+i).value));
+  if (new Set(newOrder).size !== TEAMS) {
+    errEl.textContent = 'Each team must appear exactly once. Please check for duplicates.';
+    return;
+  }
+  baseOrder = newOrder;
+  resetToBaseOrder();
+  toggleOrderPanel();
+}
+
+function buildTeamCards() {
+  const grid = document.getElementById('team-grid');
+  grid.innerHTML = '';
+  teams.forEach((name, i) => {
+    const card = document.createElement('div');
+    card.className = 'team-card';
+    card.style.setProperty('--team-color', TEAM_COLORS[i]);
+    const gm = GM_NAMES[DEFAULT_TEAMS[i]] || '';
+    card.innerHTML = `<label>Team ${i+1}</label><input value="${name}" oninput="teams[${i}]=this.value;renderTable();buildTradeSelects();if(window.syncDraftedPlayers)window.syncDraftedPlayers(DIVISION_KEY)">${gm ? `<div class="gm-name">GM: ${gm}</div>` : ''}`;
+    grid.appendChild(card);
+  });
+}
+
+function tradePickOptions() {
+  return picks.map(p =>
+    `<option value="${p.overall-1}">Pick ${p.overall} (Rd ${p.round} Pk ${p.pickInRound}) — ${teams[p.teamSlot]}</option>`
+  ).join('');
+}
+
+function addTradePick(side) {
+  const container = document.getElementById('trade-' + side + '-picks');
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.className = 'trade-pick-row';
+  div.innerHTML = `<select class="trade-sel-${side}">${tradePickOptions()}</select>
+    <button class="btn btn-small" onclick="this.parentElement.remove();document.getElementById('trade-error').textContent=''">✕</button>`;
+  const sel = div.querySelector('select');
+  sel.selectedIndex = Math.min(idx * 2, picks.length - 1);
+  container.appendChild(div);
+  document.getElementById('trade-error').textContent = '';
+}
+
+function buildTradeSelects() {
+  ['a','b'].forEach((side, sideIdx) => {
+    const container = document.getElementById('trade-' + side + '-picks');
+    container.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'trade-pick-row';
+    div.innerHTML = `<select class="trade-sel-${side}">${tradePickOptions()}</select>
+      <button class="btn btn-small" onclick="this.parentElement.remove();document.getElementById('trade-error').textContent=''">✕</button>`;
+    const sel = div.querySelector('select');
+    sel.selectedIndex = sideIdx === 1 ? Math.min(1, picks.length - 1) : 0;
+    container.appendChild(div);
+  });
+  document.getElementById('trade-error').textContent = '';
+}
+
+function ord(n) { return ['st','nd','rd'][((n+90)%100-10)%10-1]||'th'; }
+
+function isRookie(r) { return false; }
+
+function renderTable() {
+  const tbody = document.getElementById('draft-body');
+  tbody.innerHTML = '';
+  picks.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    if (p.pickInRound === 1) tr.classList.add('round-start');
+    if (isRookie(p.round)) tr.classList.add('rookie-round');
+    if (selectedIdx === i) tr.classList.add('selected');
+    tr.onclick = () => selectPick(i);
+
+    const color = TEAM_COLORS[p.teamSlot];
+    const teamName = teams[p.teamSlot] || `Team ${p.teamSlot+1}`;
+    const rdLabel = isRookie(p.round)
+      ? `<span class="round-label rookie-round-label">${p.round}</span>`
+      : `<span class="round-label">${p.round}</span>`;
+    const posPlaceholder = isRookie(p.round) ? 'Position (U18)' : 'Position';
+    const rookieBadge = isRookie(p.round) ? `<span class="rookie-badge">U18</span>` : '';
+
+    tr.innerHTML = `
+      <td>${p.overall}</td>
+      <td>${rdLabel}</td>
+      <td>${p.pickInRound}</td>
+      <td><span class="team-pill" style="background:${color}22;color:${color}">${teamName}</span></td>
+      <td>
+        <div class="autocomplete-wrap" onclick="event.stopPropagation()">
+          <input class="editable player-input" data-idx="${i}" value="${p.player}" placeholder="Player name"
+            oninput="picks[${i}].player=this.value;if(selectedIdx===${i})updateAnnounce(${i});acInput(this,${i})"
+            onblur="setTimeout(()=>acClose(${i}),150)"
+            onkeydown="acKey(event,${i});if(event.key==='Enter'){checkForDuplicates()}"
+            onclick="selectPick(${i})">
+          <div class="ac-dropdown" id="ac-${i}"></div>
+        </div>
+        ${rookieBadge}
+      </td>
+      <td><input class="editable" value="${p.position}" placeholder="${posPlaceholder}"
+        oninput="picks[${i}].position=this.value;if(selectedIdx===${i})updateAnnounce(${i})"
+        onclick="event.stopPropagation();selectPick(${i})"></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function selectPick(i) {
+  selectedIdx = i;
+  document.querySelectorAll('tbody tr').forEach((r,idx) => {
+    r.classList.toggle('selected', idx === i);
+  });
+  updateAnnounce(i);
+}
+
+function updateAnnounce(i) {
+  const p = picks[i];
+  const team = teams[p.teamSlot] || `Team ${p.teamSlot+1}`;
+  const player = p.player || '[Player Name]';
+  const pos = p.position || '[Position]';
+  const bar = document.getElementById('announce-bar');
+  const rookiePart = isRookie(p.round) ? `, <b>U18 Rookie pick</b>` : '';
+  bar.innerHTML = `"With the <b>${p.pickInRound}${ord(p.pickInRound)} pick of Round ${p.round}</b>, <b>${team}</b> selects <b>${player}</b>, <b>${pos}</b>${rookiePart}."`;
+}
+
+function toggleTrade() {
+  const panel = document.getElementById('trade-panel');
+  const btn = document.getElementById('trade-btn');
+  const open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  btn.classList.toggle('active', !open);
+  if (!open) buildTradeSelects();
+}
+
+function executeTrade() {
+  const errEl = document.getElementById('trade-error');
+  const aSels = [...document.querySelectorAll('.trade-sel-a')].map(s => parseInt(s.value));
+  const bSels = [...document.querySelectorAll('.trade-sel-b')].map(s => parseInt(s.value));
+
+  if (aSels.length === 0 || bSels.length === 0) {
+    errEl.textContent = 'Each side must have at least one pick.'; return;
+  }
+  if (aSels.length !== bSels.length) {
+    errEl.textContent = `Unbalanced trade: Team A is giving ${aSels.length} pick${aSels.length>1?'s':''} but Team B is giving ${bSels.length}. Both sides must trade the same number of picks.`; return;
+  }
+  const allPicks = [...aSels, ...bSels];
+  if (new Set(allPicks).size !== allPicks.length) {
+    errEl.textContent = 'The same pick cannot appear more than once in a trade.'; return;
+  }
+  errEl.textContent = '';
+
+  const aSlots = aSels.map(i => picks[i].teamSlot);
+  const bSlots = bSels.map(i => picks[i].teamSlot);
+  aSels.forEach((pickIdx, i) => picks[pickIdx].teamSlot = bSlots[i]);
+  bSels.forEach((pickIdx, i) => picks[pickIdx].teamSlot = aSlots[i]);
+
+  renderTable();
+  buildTradeSelects();
+}
+
+function clearAll() {
+  const input = document.getElementById('clear-confirm-input');
+  const wrap = document.getElementById('clear-confirm-wrap');
+  if (wrap.style.display === 'none' || wrap.style.display === '') {
+    wrap.style.display = 'inline-flex';
+    input.value = '';
+    input.focus();
+  } else if (input.value.trim().toLowerCase() === 'clear') {
+    picks.forEach(p => { p.player = ''; p.position = ''; });
+    selectedIdx = null;
+    document.getElementById('announce-bar').innerHTML = 'Select a pick to see the draft announcement.';
+    renderTable();
+    wrap.style.display = 'none';
+    if (window.syncDraftedPlayers) window.syncDraftedPlayers(DIVISION_KEY);
+    if (window.syncDraftedPlayers) window.syncDraftedPlayers(DIVISION_KEY);
+    input.value = '';
+  } else {
+    input.style.outline = '1px solid #ef4444';
+    setTimeout(() => input.style.outline = '', 1000);
+    input.focus();
+  }
+}
+
+function copyAnnouncements() {
+  const lines = picks.map(p => {
+    const team = teams[p.teamSlot] || `Team ${p.teamSlot+1}`;
+    const player = p.player || '[Player Name]';
+    const pos = p.position || '[Position]';
+    const rookiePart = isRookie(p.round) ? ', U18 Rookie pick' : '';
+    return `"With the ${p.pickInRound}${ord(p.pickInRound)} pick of Round ${p.round}, ${team} selects ${player}, ${pos}${rookiePart}."`;
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => alert('All announcements copied to clipboard!'));
+}
+
+function checkForDuplicates() {
+  const playerCounts = {};
+  picks.forEach(p => {
+    const name = p.player.trim().toLowerCase();
+    if (name) playerCounts[name] = (playerCounts[name] || 0) + 1;
+  });
+  document.querySelectorAll('input.player-input').forEach(input => {
+    const name = input.value.trim().toLowerCase();
+    input.classList.toggle('duplicate', name && playerCounts[name] > 1);
+  });
+}
+
+function copySummary(btn) {
+  const initials = t => t.split(' ').map(w => w[0]).join('').toUpperCase();
+  const lines = [];
+  lines.push('FFA DRAFT 2026 - WOMENS');
+  lines.push('Draft order: ' + baseOrder.map((slot, i) => (i+1) + '. ' + teams[slot]).join(', '));
+  lines.push('');
+  let currentRound = 0;
+  picks.forEach(p => {
+    if (p.round !== currentRound) {
+      currentRound = p.round;
+      lines.push(p.round === ROOKIE_ROUND ? '-- Round ' + p.round + ' (U18 Rookie) --' : '-- Round ' + p.round + ' --');
+    }
+    const team = teams[p.teamSlot] || 'Team ' + (p.teamSlot+1);
+    const player = p.player || '-';
+    const pos = p.position || '-';
+    lines.push('  Pick ' + p.pickInRound + ': ' + team + ' | ' + player + ' | ' + pos);
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy draft summary', 2000);
+  });
+}
+
+async function checkPin() {
+  const val = document.getElementById('pin-input').value.trim();
+  if (!val) return;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+  const h = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').substring(0, 16);
+  if (h === '8feaa233aa6acf48') {
+    document.getElementById('pin-overlay').style.display = 'none';
+  } else {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN. Please try again.';
+    document.getElementById('pin-input').value = '';
+  }
+}
+
+
+snakeOrder();
+buildTeamCards();
+renderTable();
+
+let playerNames = [];
+let playerPositions = {};
+
+async function loadPlayerCSV() {
+  try {
+    const res = await fetch('Womens 2026 Draft Declirations - Sheet1.csv');
+    if (!res.ok) return;
+    const text = await res.text();
+    const dataRows = parseCSVRows(text).slice(1);
+    const EXCLUDE = ["Tamika Sutton", "Natsuko Nakajima", "Courtney Scarth", "Bree Payne"];
+    playerNames = dataRows.map(r => r[0]).filter(n => n && !EXCLUDE.includes(n));
+    dataRows.forEach(r => {
+      if (r[0] && r[4] && !EXCLUDE.includes(r[0].trim())) playerPositions[r[0].trim()] = r[4].trim();
+    });
+  } catch(e) {
+    console.warn('Could not load player CSV:', e);
+  }
+}
+
+function parseCSVRows(text) {
+  const rows = [];
+  let i = 0, n = text.length;
+  while (i < n) {
+    const row = [];
+    while (i < n) {
+      let field = '';
+      if (text[i] === '"') {
+        i++;
+        while (i < n) {
+          if (text[i] === '"' && i+1 < n && text[i+1] === '"') { field += '"'; i += 2; }
+          else if (text[i] === '"') { i++; break; }
+          else { field += text[i++]; }
+        }
+      } else {
+        while (i < n && text[i] !== ',' && text[i] !== '\n' && text[i] !== '\r') {
+          field += text[i++];
+        }
+      }
+      row.push(field.trim());
+      if (i < n && text[i] === ',') { i++; }
+      else { break; }
+    }
+    if (i < n && text[i] === '\r') i++;
+    if (i < n && text[i] === '\n') i++;
+    if (row.length) rows.push(row);
+  }
+  return rows;
+}
+
+let acActive = {};
+
+function acInput(input, idx) {
+  const val = input.value.trim().toLowerCase();
+  const dd = document.getElementById('ac-' + idx);
+  if (!dd) return;
+  if (val.length < 3) { dd.classList.remove('open'); return; }
+  const matches = playerNames.filter(n => n.toLowerCase().startsWith(val)).slice(0, 8);
+  if (!matches.length) { dd.classList.remove('open'); return; }
+  acActive[idx] = -1;
+  dd.innerHTML = matches.map((m, i) =>
+    `<div class="ac-option" data-val="${m}" onmousedown="acSelect(${idx},'${m.replace(/'/g,"\\'")}')">` + m + '</div>'
+  ).join('');
+  dd.classList.add('open');
+}
+
+function acSelect(idx, name) {
+  picks[idx].player = name;
+  const input = [...document.querySelectorAll('input.player-input')].find(el => el.dataset.idx == idx);
+  if (input) input.value = name;
+  const pos = playerPositions[name] || '';
+  if (pos) {
+    picks[idx].position = pos;
+    const row = document.querySelectorAll('tbody tr')[idx];
+    if (row) {
+      const posInput = row.querySelectorAll('input.editable')[1];
+      if (posInput) posInput.value = pos;
+    }
+  }
+  acClose(idx);
+  if (selectedIdx === idx) updateAnnounce(idx);
+  checkForDuplicates();
+  if (window.syncDraftedPlayers) window.syncDraftedPlayers(DIVISION_KEY);
+}
+
+function acClose(idx) {
+  const dd = document.getElementById('ac-' + idx);
+  if (dd) dd.classList.remove('open');
+}
+
+function acKey(e, idx) {
+  const dd = document.getElementById('ac-' + idx);
+  if (!dd || !dd.classList.contains('open')) return;
+  const opts = dd.querySelectorAll('.ac-option');
+  if (!opts.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acActive[idx] = Math.min((acActive[idx] || -1) + 1, opts.length - 1);
+    opts.forEach((o, i) => o.classList.toggle('active', i === acActive[idx]));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acActive[idx] = Math.max((acActive[idx] || 0) - 1, 0);
+    opts.forEach((o, i) => o.classList.toggle('active', i === acActive[idx]));
+  } else if (e.key === 'Enter' && acActive[idx] >= 0) {
+    e.preventDefault();
+    acSelect(idx, opts[acActive[idx]].dataset.val);
+  } else if (e.key === 'Escape') {
+    acClose(idx);
+  }
+}
+loadPlayerCSV();
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const fbApp = initializeApp({
+  apiKey: "AIzaSyCFdWwwTdPi42oAntUszwWFQL4WFaJS9IQ",
+  databaseURL: "https://ffa-draft-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ffa-draft",
+  appId: "1:849324499106:web:9893151b2298198fe437fb"
+});
+const db = getDatabase(fbApp);
+window.syncDraftedPlayers = function(divisionKey) {
+  if (typeof picks === 'undefined') return;
+  // Sync drafted player names for GM boards
+  const drafted = {};
+  picks.forEach(p => { if (p.player && p.player.trim()) drafted[p.player.trim()] = true; });
+  set(ref(db, 'drafted/' + divisionKey), drafted);
+  // Sync full pick state for stream board
+  const pickData = {};
+  picks.forEach((p, i) => { pickData[i] = { player: p.player, position: p.position, teamSlot: p.teamSlot }; });
+  const teamData = typeof teams !== 'undefined' ? teams : [];
+  set(ref(db, 'stream/' + divisionKey), { picks: pickData, teams: teamData });
+};
+</script>
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const fbApp = initializeApp({
+  apiKey: "AIzaSyCFdWwwTdPi42oAntUszwWFQL4WFaJS9IQ",
+  databaseURL: "https://ffa-draft-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ffa-draft",
+  appId: "1:849324499106:web:9893151b2298198fe437fb"
+});
+const db = getDatabase(fbApp);
+window.syncDraftedPlayers = function(divisionKey) {
+  if (typeof picks === 'undefined') return;
+  // Sync drafted player names for GM boards
+  const drafted = {};
+  picks.forEach(p => { if (p.player && p.player.trim()) drafted[p.player.trim()] = true; });
+  set(ref(db, 'drafted/' + divisionKey), drafted);
+  // Sync full pick state for stream board
+  const pickData = {};
+  picks.forEach((p, i) => { pickData[i] = { player: p.player, position: p.position, teamSlot: p.teamSlot }; });
+  const teamData = typeof teams !== 'undefined' ? teams : [];
+  set(ref(db, 'stream/' + divisionKey), { picks: pickData, teams: teamData });
+};
+</script>
+
+</body>
+</html>
