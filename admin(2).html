@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FFA Draft Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080a0f;
+  --surface: #0e1118;
+  --surface2: #161b26;
+  --surface3: #1e2535;
+  --border: rgba(255,255,255,0.07);
+  --border-md: rgba(255,255,255,0.13);
+  --border-hi: rgba(255,255,255,0.22);
+  --text: #e8eaf0;
+  --muted: #5a6278;
+  --muted2: #7c8499;
+  --accent: #f97316;
+  --accent2: #fb923c;
+  --womens: #a78bfa;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --info: #38bdf8;
+  --admin: #f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+
+/* PIN overlay */
+.pin-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(6px)}
+.pin-card{background:var(--surface);border:1px solid var(--border-hi);border-radius:16px;padding:2.5rem 2rem;width:100%;max-width:360px;text-align:center}
+.pin-card h2{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--admin);letter-spacing:0.1em;margin-bottom:0.4rem}
+.pin-card p{font-size:0.82rem;color:var(--muted2);margin-bottom:1.5rem}
+.pin-input{width:100%;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.75rem 1rem;border-radius:8px;font-family:'Space Mono',monospace;font-size:1.4rem;letter-spacing:0.3em;text-align:center;margin-bottom:0.75rem;outline:none;transition:border-color 0.15s}
+.pin-input:focus{border-color:var(--admin)}
+.pin-error{font-size:0.8rem;color:var(--danger);min-height:1.2em;margin-bottom:0.75rem}
+
+/* Header */
+.header{background:var(--surface);border-bottom:1px solid var(--border-md);padding:1rem 2rem;display:flex;align-items:center;gap:1.5rem}
+.header h1{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.1em;color:var(--admin)}
+.header-sub{font-size:0.75rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em}
+.admin-badge{margin-left:auto;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:var(--admin);padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:220px 1fr;flex:1;min-height:0}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;display:flex;flex-direction:column;gap:2px}
+.nav-section{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;padding:0.5rem 1.25rem 0.25rem;margin-top:0.5rem}
+.nav-item{padding:0.6rem 1.25rem;font-size:0.85rem;cursor:pointer;color:var(--muted2);border-left:3px solid transparent;transition:all 0.12s;display:flex;align-items:center;gap:0.6rem}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{color:var(--text);border-left-color:var(--admin);background:rgba(245,158,11,0.07)}
+.nav-icon{font-size:1rem;width:18px;text-align:center}
+
+.content{padding:2rem;overflow-y:auto}
+.section{display:none}
+.section.active{display:block}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border-md);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.06em;color:var(--admin);margin-bottom:0.25rem}
+.card-sub{font-size:0.77rem;color:var(--muted2);margin-bottom:1.25rem}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+
+/* Form elements */
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted2);margin-bottom:0.4rem;font-weight:500}
+.field input,.field select,.field textarea{width:100%;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.55rem 0.85rem;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none;transition:border-color 0.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--admin)}
+.field textarea{resize:vertical;min-height:80px;line-height:1.5}
+.field select option{background:var(--surface2)}
+.hint{font-size:0.72rem;color:var(--muted);margin-top:0.3rem}
+
+/* Buttons */
+.btn{padding:0.5rem 1.1rem;border-radius:7px;border:1px solid var(--border-hi);background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;cursor:pointer;transition:all 0.14s;font-weight:500}
+.btn:hover{background:var(--surface2);border-color:var(--admin);color:var(--admin)}
+.btn-primary{background:var(--admin);border-color:var(--admin);color:#000;font-weight:600}
+.btn-primary:hover{background:#fbbf24;border-color:#fbbf24;color:#000}
+.btn-danger{border-color:var(--danger);color:var(--danger)}
+.btn-danger:hover{background:rgba(239,68,68,0.1)}
+.btn-success{border-color:var(--success);color:var(--success)}
+.btn-success:hover{background:rgba(34,197,94,0.1)}
+.btn-sm{padding:0.35rem 0.75rem;font-size:0.77rem}
+.btn-row{display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center}
+
+/* Status bar */
+.status-bar{display:flex;align-items:center;gap:0.75rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.6rem 1rem;margin-bottom:1rem;font-size:0.8rem}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.status-dot.off{background:var(--muted);animation:none}
+
+/* Clock settings */
+.clock-display{font-family:'Space Mono',monospace;font-size:3.5rem;color:var(--admin);text-align:center;padding:1.5rem;border:1px solid var(--border-md);border-radius:10px;background:var(--surface2);letter-spacing:0.05em;margin-bottom:1rem}
+.clock-controls{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem}
+
+/* Team table */
+.table-wrap{overflow-x:auto;margin-bottom:1rem}
+table{width:100%;border-collapse:collapse;font-size:0.82rem}
+thead th{background:var(--surface2);color:var(--muted2);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:500;padding:0.6rem 0.85rem;text-align:left;border-bottom:1px solid var(--border-md)}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.1s}
+tbody tr:hover td{background:rgba(255,255,255,0.02)}
+td{padding:0.55rem 0.85rem;vertical-align:middle}
+td input{width:100%;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;padding:0}
+td input:focus{color:#fff}
+.color-swatch{width:14px;height:14px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em}
+.tag-mens{background:rgba(249,115,22,0.15);color:var(--accent)}
+.tag-womens{background:rgba(167,139,250,0.15);color:var(--womens)}
+
+/* Player list */
+.player-row{display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.85rem;border-bottom:1px solid var(--border);transition:background 0.1s}
+.player-row:hover{background:var(--surface2)}
+.player-avatar{width:32px;height:32px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:600;color:var(--muted2);flex-shrink:0}
+.player-name{font-weight:500;font-size:0.85rem}
+.player-meta{font-size:0.73rem;color:var(--muted2)}
+.player-status{margin-left:auto;display:flex;align-items:center;gap:0.5rem}
+.drafted-badge{background:rgba(34,197,94,0.12);color:var(--success);border:1px solid rgba(34,197,94,0.3);padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:600}
+
+/* PIN manager */
+.pin-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.pin-item{background:var(--surface2);border:1px solid var(--border-md);border-radius:8px;padding:1.25rem}
+.pin-label{font-size:0.72rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;font-weight:500}
+.pin-value{font-family:'Space Mono',monospace;font-size:1.1rem;letter-spacing:0.15em;color:var(--text);background:var(--surface3);border:1px solid var(--border);padding:0.5rem 0.85rem;border-radius:6px;margin-bottom:0.6rem;display:flex;align-items:center;justify-content:space-between}
+.pin-value .eye{cursor:pointer;color:var(--muted);font-size:0.9rem;transition:color 0.12s}
+.pin-value .eye:hover{color:var(--text)}
+
+/* Tabs within sections */
+.tabs{display:flex;gap:2px;margin-bottom:1.5rem;background:var(--surface2);border-radius:8px;padding:3px}
+.tab{padding:0.45rem 1rem;border-radius:6px;cursor:pointer;font-size:0.82rem;color:var(--muted2);transition:all 0.12s}
+.tab.active{background:var(--surface);color:var(--text);font-weight:500}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid var(--border)}
+.toggle-info .toggle-title{font-size:0.85rem;font-weight:500}
+.toggle-info .toggle-desc{font-size:0.73rem;color:var(--muted2);margin-top:2px}
+.toggle{position:relative;width:38px;height:21px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:var(--surface3);border-radius:21px;cursor:pointer;transition:0.2s;border:1px solid var(--border-md)}
+.toggle input:checked+.toggle-slider{background:var(--admin)}
+.toggle-slider:before{content:'';position:absolute;width:15px;height:15px;left:2px;top:2px;border-radius:50%;background:#fff;transition:0.2s}
+.toggle input:checked+.toggle-slider:before{transform:translateX(17px)}
+
+/* Notification */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:0.85rem 1.25rem;font-size:0.85rem;z-index:999;transform:translateY(4rem);opacity:0;transition:all 0.3s;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+
+/* Stat cards */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:1rem 1.25rem}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--text);line-height:1}
+.stat-label{font-size:0.72rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.06em;margin-top:4px}
+.stat-sub{font-size:0.75rem;color:var(--muted);margin-top:2px}
+
+.section-header{margin-bottom:1.5rem}
+.section-header h2{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:0.06em;color:var(--text)}
+.section-header p{font-size:0.8rem;color:var(--muted2);margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- PIN Gate -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-card">
+    <h2>Admin Panel</h2>
+    <p>FFA Draft 2026 · Restricted Access</p>
+    <input class="pin-input" type="password" id="pin-input" placeholder="····" maxlength="6"
+      onkeydown="if(event.key==='Enter')checkAdminPin()">
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn btn-primary" style="width:100%;padding:0.65rem" onclick="checkAdminPin()">Enter Admin</button>
+  </div>
+</div>
+
+<div class="header">
+  <div>
+    <h1>FFA Admin</h1>
+    <div class="header-sub">Draft Night 2026 · Control Panel</div>
+  </div>
+  <div class="admin-badge">⚙ Admin Access</div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="showSection('overview')"><span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-section">Draft</div>
+    <div class="nav-item" onclick="showSection('clock')"><span class="nav-icon">⏱</span>Draft Clock</div>
+    <div class="nav-item" onclick="showSection('order')"><span class="nav-icon">🔀</span>Draft Order</div>
+    <div class="nav-item" onclick="showSection('teams')"><span class="nav-icon">🏆</span>Teams & GMs</div>
+    <div class="nav-section">Players</div>
+    <div class="nav-item" onclick="showSection('players')"><span class="nav-icon">👤</span>Player Database</div>
+    <div class="nav-item" onclick="showSection('pending')"><span class="nav-icon">📝</span>Pending Edits</div>
+    <div class="nav-section">System</div>
+    <div class="nav-item" onclick="showSection('pins')"><span class="nav-icon">🔑</span>PIN Management</div>
+    <div class="nav-item" onclick="showSection('settings')"><span class="nav-icon">⚙️</span>Settings</div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="section active" id="section-overview">
+      <div class="section-header">
+        <h2>Dashboard</h2>
+        <p>Live status overview for FFA Draft 2026</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-mens-picks">0</div>
+          <div class="stat-label">Men's Picks Made</div>
+          <div class="stat-sub">of 66 total (10 rds + rookie)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-womens-picks">0</div>
+          <div class="stat-label">Women's Picks Made</div>
+          <div class="stat-sub">of 66 total (11 rds)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-players-total">0</div>
+          <div class="stat-label">Registered Players</div>
+          <div class="stat-sub">across both divisions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-on-clock">—</div>
+          <div class="stat-label">Currently On Clock</div>
+          <div class="stat-sub" id="stat-clock-sub">No draft active</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Men's Division</div>
+          <div class="card-sub">Live draft status</div>
+          <div class="status-bar">
+            <div class="status-dot" id="mens-dot"></div>
+            <span id="mens-status-text">Loading...</span>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-sm" onclick="window.open('mens_draft_board_v2.html','_blank')">Open Draft Board →</button>
+            <button class="btn btn-sm" onclick="window.open('mens_stream_board.html','_blank')">Stream Board →</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Women's Division</div>
+          <div class="card-sub">Live draft status</div>
+          <div class="status-bar">
+            <div class="status-dot" id="womens-dot"></div>
+            <span id="womens-status-text">Loading...</span>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-sm" onclick="window.open('womens_draft_board.html','_blank')">Open Draft Board →</button>
+            <button class="btn btn-sm" onclick="window.open('womens_stream_board.html','_blank')">Stream Board →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLOCK -->
+    <div class="section" id="section-clock">
+      <div class="section-header">
+        <h2>Draft Clock</h2>
+        <p>Control the per-pick countdown timer. When a team's clock runs out, the draft auto-advances and they move behind the next team.</p>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Clock Configuration</div>
+          <div class="card-sub">Applied to all upcoming picks</div>
+          <div class="field">
+            <label>Pick Time Limit</label>
+            <select id="clock-duration" onchange="updateClockPreview()">
+              <option value="60">1 minute</option>
+              <option value="90">1.5 minutes</option>
+              <option value="120" selected>2 minutes</option>
+              <option value="180">3 minutes</option>
+              <option value="300">5 minutes</option>
+              <option value="600">10 minutes</option>
+              <option value="0">No limit (manual advance)</option>
+            </select>
+          </div>
+          <div class="clock-display" id="clock-preview">2:00</div>
+          <div class="clock-controls">
+            <button class="btn btn-primary" onclick="startClock('mens')">▶ Start Men's</button>
+            <button class="btn btn-primary" style="background:var(--womens);border-color:var(--womens)" onclick="startClock('womens')">▶ Start Women's</button>
+            <button class="btn btn-danger" onclick="pauseAllClocks()">⏸ Pause All</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-sm" onclick="resetClock('mens')">Reset Men's Clock</button>
+            <button class="btn btn-sm" onclick="resetClock('womens')">Reset Women's Clock</button>
+            <button class="btn btn-sm" onclick="skipPick('mens')">Skip Pick (Men's)</button>
+            <button class="btn btn-sm" onclick="skipPick('womens')">Skip Pick (Women's)</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Clock Behaviour</div>
+          <div class="card-sub">What happens when time runs out</div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Auto-advance on timeout</div>
+              <div class="toggle-desc">Draft moves to next team; timed-out team re-inserts after them</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="toggle-autoadvance" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Use mock draft on timeout</div>
+              <div class="toggle-desc">If GM has a mock draft, auto-select their next queued player</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="toggle-mockdraft" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Warn GM at 30s remaining</div>
+              <div class="toggle-desc">Flash notification on GM's device when clock is low</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="toggle-warn30" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-title">Clock pauses between rounds</div>
+              <div class="toggle-desc">Admin must manually start next round</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="toggle-pauseround" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div style="margin-top:1rem">
+            <button class="btn btn-primary" onclick="saveClockSettings()">Save Clock Settings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DRAFT ORDER -->
+    <div class="section" id="section-order">
+      <div class="section-header">
+        <h2>Draft Order</h2>
+        <p>Set and lock the Round 1 pick order for each division. Snake order is computed automatically.</p>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'order-mens')">Men's Division</div>
+        <div class="tab" onclick="switchTab(this,'order-womens')">Women's Division</div>
+      </div>
+      <div class="tab-content active" id="tab-order-mens">
+        <div class="card">
+          <div class="card-title">Men's Round 1 Order</div>
+          <div class="card-sub">Drag or use the dropdowns to set pick order</div>
+          <div id="mens-order-slots"></div>
+          <div style="margin-top:1rem" class="btn-row">
+            <button class="btn btn-primary" onclick="saveOrder('mens')">Save & Push Live</button>
+            <button class="btn btn-sm" onclick="randomizeOrder('mens')">Randomize</button>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-order-womens">
+        <div class="card">
+          <div class="card-title">Women's Round 1 Order</div>
+          <div class="card-sub">Drag or use the dropdowns to set pick order</div>
+          <div id="womens-order-slots"></div>
+          <div style="margin-top:1rem" class="btn-row">
+            <button class="btn btn-primary" onclick="saveOrder('womens')">Save & Push Live</button>
+            <button class="btn btn-sm" onclick="randomizeOrder('womens')">Randomize</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEAMS -->
+    <div class="section" id="section-teams">
+      <div class="section-header">
+        <h2>Teams & GMs</h2>
+        <p>Manage team names, colours and GM assignments for both divisions.</p>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this,'teams-mens')">Men's Division</div>
+        <div class="tab" onclick="switchTab(this,'teams-womens')">Women's Division</div>
+      </div>
+      <div class="tab-content active" id="tab-teams-mens">
+        <div class="card">
+          <div class="card-title">Men's Teams</div>
+          <div class="table-wrap">
+            <table id="mens-teams-table">
+              <thead><tr><th>#</th><th>Colour</th><th>Team Name</th><th>GM Name</th><th>GM Email</th><th>PIN</th></tr></thead>
+              <tbody id="mens-teams-body"></tbody>
+            </table>
+          </div>
+          <button class="btn btn-primary" onclick="saveTeams('mens')">Save Changes</button>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-teams-womens">
+        <div class="card">
+          <div class="card-title">Women's Teams</div>
+          <div class="table-wrap">
+            <table id="womens-teams-table">
+              <thead><tr><th>#</th><th>Colour</th><th>Team Name</th><th>GM Name</th><th>GM Email</th><th>PIN</th></tr></thead>
+              <tbody id="womens-teams-body"></tbody>
+            </table>
+          </div>
+          <button class="btn btn-primary" onclick="saveTeams('womens')">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAYERS -->
+    <div class="section" id="section-players">
+      <div class="section-header">
+        <h2>Player Database</h2>
+        <p>View, search and manage registered players. Players can edit their own profiles via the Player Portal.</p>
+      </div>
+      <div class="card" style="margin-bottom:1rem">
+        <div style="display:flex;gap:0.75rem;align-items:center">
+          <input id="player-search" placeholder="Search by name, position, division…" style="flex:1;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.5rem 0.85rem;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none" oninput="filterPlayers()">
+          <select id="player-div-filter" style="background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.5rem 0.85rem;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none" onchange="filterPlayers()">
+            <option value="">All divisions</option>
+            <option value="mens">Men's</option>
+            <option value="womens">Women's</option>
+          </select>
+          <button class="btn btn-primary" onclick="showAddPlayer()">+ Add Player</button>
+        </div>
+      </div>
+      <div id="players-list"></div>
+    </div>
+
+    <!-- PENDING -->
+    <div class="section" id="section-pending">
+      <div class="section-header">
+        <h2>Pending Player Edits</h2>
+        <p>Players can submit profile changes that require admin approval.</p>
+      </div>
+      <div id="pending-list">
+        <div class="card" style="text-align:center;color:var(--muted2);padding:3rem">
+          No pending edits waiting for review.
+        </div>
+      </div>
+    </div>
+
+    <!-- PINS -->
+    <div class="section" id="section-pins">
+      <div class="section-header">
+        <h2>PIN Management</h2>
+        <p>Change access PINs for all areas of the draft system.</p>
+      </div>
+      <div class="pin-grid">
+        <div class="pin-item">
+          <div class="pin-label">Admin PIN</div>
+          <div class="field"><input type="text" id="pin-admin" placeholder="New admin PIN (4–6 digits)" maxlength="6"></div>
+          <button class="btn btn-sm btn-primary" onclick="updatePin('admin')">Update</button>
+        </div>
+        <div class="pin-item">
+          <div class="pin-label">Men's Draft Board</div>
+          <div class="field"><input type="text" id="pin-mens" placeholder="New PIN" maxlength="6"></div>
+          <button class="btn btn-sm btn-primary" onclick="updatePin('mens')">Update</button>
+        </div>
+        <div class="pin-item">
+          <div class="pin-label">Women's Draft Board</div>
+          <div class="field"><input type="text" id="pin-womens" placeholder="New PIN" maxlength="6"></div>
+          <button class="btn btn-sm btn-primary" onclick="updatePin('womens')">Update</button>
+        </div>
+        <div class="pin-item">
+          <div class="pin-label">Player Portal</div>
+          <div class="field"><input type="text" id="pin-player" placeholder="New PIN" maxlength="6"></div>
+          <button class="btn btn-sm btn-primary" onclick="updatePin('player')">Update</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1rem">
+        <div class="card-title">How PINs Work</div>
+        <div class="card-sub">PINs are stored as SHA-256 hashes in Firebase — the plaintext is never saved. Make sure to communicate new PINs to the relevant people before changing them.</div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="section" id="section-settings">
+      <div class="section-header">
+        <h2>Settings</h2>
+        <p>Global configuration for the draft system.</p>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Draft Configuration</div>
+          <div class="card-sub">Men's Division</div>
+          <div class="field"><label>Number of Rounds</label><input type="number" id="mens-rounds" value="10" min="1" max="20"></div>
+          <div class="field"><label>Number of Teams</label><input type="number" id="mens-teams-count" value="6" min="2" max="12"></div>
+          <div class="field"><label>Rookie Round Number (0 = none)</label><input type="number" id="mens-rookie" value="10" min="0" max="20"></div>
+          <button class="btn btn-primary btn-sm" onclick="saveDraftConfig('mens')">Save Men's Config</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Draft Configuration</div>
+          <div class="card-sub">Women's Division</div>
+          <div class="field"><label>Number of Rounds</label><input type="number" id="womens-rounds" value="11" min="1" max="20"></div>
+          <div class="field"><label>Number of Teams</label><input type="number" id="womens-teams-count" value="6" min="2" max="12"></div>
+          <div class="field"><label>Rookie Round Number (0 = none)</label><input type="number" id="womens-rookie" value="0" min="0" max="20"></div>
+          <button class="btn btn-primary btn-sm" onclick="saveDraftConfig('womens')">Save Women's Config</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Player Portal</div>
+        <div class="card-sub">Control what players can edit on their own profile</div>
+        <div class="toggle-row">
+          <div class="toggle-info"><div class="toggle-title">Allow profile photo URL</div><div class="toggle-desc">Players can link a profile image</div></div>
+          <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><div class="toggle-title">Allow film links</div><div class="toggle-desc">Players can link game footage (YouTube, Hudl, etc.)</div></div>
+          <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><div class="toggle-title">Allow "About Me" section</div><div class="toggle-desc">Players can write a short bio</div></div>
+          <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><div class="toggle-title">Require admin approval for changes</div><div class="toggle-desc">Player edits go to Pending queue before going live</div></div>
+          <label class="toggle"><input type="checkbox" id="toggle-approval"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const fbApp = initializeApp({
+  apiKey: "AIzaSyCFdWwwTdPi42oAntUszwWFQL4WFaJS9IQ",
+  databaseURL: "https://ffa-draft-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ffa-draft",
+  appId: "1:849324499106:web:9893151b2298198fe437fb"
+});
+const db = getDatabase(fbApp);
+window._db = db;
+window._ref = ref;
+window._set = set;
+window._get = get;
+window._update = update;
+window._onValue = onValue;
+
+// ── PIN CHECK ──
+window.checkAdminPin = async function() {
+  const val = document.getElementById('pin-input').value.trim();
+  if (!val) return;
+  // Default admin PIN: 1234 → stored as hash. For demo we check locally.
+  // In production, compare against hash stored in Firebase.
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+  const h = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').substring(0,16);
+  // Default hash for "1234"
+  const storedHash = localStorage.getItem('admin_pin_hash') || '03ac674216f3e15c';
+  if (h === storedHash) {
+    document.getElementById('pin-overlay').style.display = 'none';
+    initAdmin();
+  } else {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN.';
+    document.getElementById('pin-input').value = '';
+  }
+};
+document.getElementById('pin-input').addEventListener('keydown', e => { if(e.key==='Enter') window.checkAdminPin(); });
+
+// ── NAV ──
+window.showSection = function(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+};
+
+window.switchTab = function(el, id) {
+  const parent = el.closest('.tabs');
+  parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const contents = parent.nextElementSibling;
+  let sib = contents;
+  while(sib) {
+    if(sib.classList.contains('tab-content')) sib.classList.remove('active');
+    sib = sib.nextElementSibling;
+  }
+  document.getElementById('tab-' + id).classList.add('active');
+};
+
+// ── TOAST ──
+window.toast = function(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+};
+
+// ── CLOCK ──
+window.updateClockPreview = function() {
+  const sec = parseInt(document.getElementById('clock-duration').value);
+  if (!sec) { document.getElementById('clock-preview').textContent = '∞'; return; }
+  const m = Math.floor(sec/60), s = sec%60;
+  document.getElementById('clock-preview').textContent = m + ':' + String(s).padStart(2,'0');
+};
+
+window.saveClockSettings = function() {
+  const dur = parseInt(document.getElementById('clock-duration').value);
+  const settings = {
+    duration: dur,
+    autoAdvance: document.getElementById('toggle-autoadvance').checked,
+    useMockDraft: document.getElementById('toggle-mockdraft').checked,
+    warn30: document.getElementById('toggle-warn30').checked,
+    pauseRound: document.getElementById('toggle-pauseround').checked,
+    updatedAt: Date.now()
+  };
+  window._set(window._ref(window._db, 'clock/settings'), settings)
+    .then(() => toast('Clock settings saved & pushed live'))
+    .catch(() => toast('Save failed', 'error'));
+};
+
+window.startClock = function(div) {
+  window._set(window._ref(window._db, 'clock/' + div + '/state'), {
+    running: true,
+    startedAt: Date.now(),
+    duration: parseInt(document.getElementById('clock-duration').value)
+  }).then(() => toast('Clock started for ' + div + "'s division"));
+};
+
+window.pauseAllClocks = function() {
+  ['mens','womens'].forEach(div => {
+    window._get(window._ref(window._db, 'clock/' + div + '/state')).then(snap => {
+      const d = snap.val();
+      if (d) window._set(window._ref(window._db, 'clock/' + div + '/state'), {...d, running: false});
+    });
+  });
+  toast('All clocks paused');
+};
+
+window.resetClock = function(div) {
+  window._set(window._ref(window._db, 'clock/' + div + '/state'), {
+    running: false,
+    startedAt: null,
+    duration: parseInt(document.getElementById('clock-duration').value)
+  }).then(() => toast('Clock reset for ' + div));
+};
+
+window.skipPick = function(div) {
+  window._set(window._ref(window._db, 'clock/' + div + '/skip'), Date.now())
+    .then(() => toast('Pick skipped (auto-advance triggered) for ' + div));
+};
+
+// ── TEAMS ──
+const DEFAULT_MENS_TEAMS = ['Team 1','Team 2','Team 3','Team 4','Team 5','Team 6'];
+const DEFAULT_WOMENS_TEAMS = ['Yeah Nah','Kunoichi','Bad Girls','5 Sheep','Red Flags','Suffragettes'];
+const MENS_COLORS = ['#f97316','#22d3ee','#a78bfa','#34d399','#fb7185','#fbbf24'];
+const WOMENS_COLORS = ['#f472b6','#a78bfa','#34d399','#fb923c','#60a5fa','#fbbf24'];
+
+function buildTeamsTable(div, teams, colors) {
+  const tbody = document.getElementById(div + '-teams-body');
+  tbody.innerHTML = '';
+  teams.forEach((t, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td><span class="color-swatch" style="background:${colors[i] || '#888'}"></span>${colors[i]||''}</td>
+      <td><input value="${t.name||t}" placeholder="Team name" onchange="updateTeamData('${div}',${i},'name',this.value)"></td>
+      <td><input value="${t.gm||''}" placeholder="GM name" onchange="updateTeamData('${div}',${i},'gm',this.value)"></td>
+      <td><input value="${t.email||''}" placeholder="GM email" onchange="updateTeamData('${div}',${i},'email',this.value)"></td>
+      <td><input value="${t.pin||''}" placeholder="Team PIN" type="password" onchange="updateTeamData('${div}',${i},'pin',this.value)"></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+const teamData = {
+  mens: DEFAULT_MENS_TEAMS.map((n,i) => ({name:n,gm:'',email:'',pin:''})),
+  womens: DEFAULT_WOMENS_TEAMS.map((n,i) => ({name:n,gm:'',email:'',pin:''}))
+};
+
+window.updateTeamData = function(div, idx, field, val) {
+  teamData[div][idx][field] = val;
+};
+
+window.saveTeams = function(div) {
+  window._set(window._ref(window._db, 'config/' + div + '/teams'), teamData[div])
+    .then(() => toast('Teams saved for ' + div + " division"));
+};
+
+// ── ORDER ──
+function buildOrderSlots(div, teams) {
+  const container = document.getElementById(div + '-order-slots');
+  container.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:1rem';
+  teams.forEach((t, i) => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--surface2);border:1px solid var(--border-md);border-radius:8px;padding:0.75rem';
+    card.innerHTML = `<div style="font-size:0.7rem;color:var(--muted2);text-transform:uppercase;margin-bottom:0.4rem">Pick ${i+1}</div>
+      <select style="width:100%;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none" id="${div}-order-${i}">
+        ${teams.map((tm,j) => `<option value="${j}" ${j===i?'selected':''}>${tm.name||tm}</option>`).join('')}
+      </select>`;
+    grid.appendChild(card);
+  });
+  container.appendChild(grid);
+}
+
+window.saveOrder = function(div) {
+  const order = Array.from({length: teamData[div].length}, (_,i) => 
+    parseInt(document.getElementById(div + '-order-' + i).value)
+  );
+  window._set(window._ref(window._db, 'config/' + div + '/draftOrder'), order)
+    .then(() => toast('Draft order saved & pushed live for ' + div));
+};
+
+window.randomizeOrder = function(div) {
+  const n = teamData[div].length;
+  const arr = Array.from({length:n},(_,i)=>i);
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  arr.forEach((v,i) => {
+    const sel = document.getElementById(div + '-order-' + i);
+    if(sel) sel.value = v;
+  });
+  toast('Randomized — click Save to apply');
+};
+
+// ── PLAYERS ──
+let allPlayers = [];
+window.filterPlayers = function() {
+  const q = document.getElementById('player-search').value.toLowerCase();
+  const div = document.getElementById('player-div-filter').value;
+  const filtered = allPlayers.filter(p =>
+    (!q || (p.name||'').toLowerCase().includes(q) || (p.position||'').toLowerCase().includes(q)) &&
+    (!div || p.division === div)
+  );
+  renderPlayers(filtered);
+};
+
+function renderPlayers(list) {
+  const container = document.getElementById('players-list');
+  if (!list.length) {
+    container.innerHTML = '<div class="card" style="text-align:center;color:var(--muted2);padding:2rem">No players found.</div>';
+    return;
+  }
+  container.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.padding = '0';
+  list.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    const initials = (p.name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    row.innerHTML = `
+      <div class="player-avatar">${initials}</div>
+      <div>
+        <div class="player-name">${p.name||'Unknown'}</div>
+        <div class="player-meta">${p.position||'—'} · <span class="tag ${p.division==='mens'?'tag-mens':'tag-womens'}">${p.division||'—'}</span></div>
+      </div>
+      <div class="player-status">
+        ${p.drafted ? '<span class="drafted-badge">Drafted</span>' : ''}
+        <button class="btn btn-sm" onclick="editPlayer('${p.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePlayer('${p.id}')">✕</button>
+      </div>
+    `;
+    card.appendChild(row);
+  });
+  container.appendChild(card);
+}
+
+window.editPlayer = function(id) {
+  const p = allPlayers.find(x => x.id === id);
+  if (!p) return;
+  toast('Edit player: ' + p.name + ' (open player portal for full edit)');
+};
+
+window.deletePlayer = function(id) {
+  if (!confirm('Delete this player from the database?')) return;
+  window._set(window._ref(window._db, 'players/' + id), null)
+    .then(() => toast('Player deleted'));
+};
+
+window.showAddPlayer = function() {
+  const name = prompt('Player full name:');
+  if (!name) return;
+  const pos = prompt('Position:') || '';
+  const div = prompt('Division (mens/womens):') || 'mens';
+  const id = 'p_' + Date.now();
+  window._set(window._ref(window._db, 'players/' + id), {id, name, position:pos, division:div, drafted:false, createdAt:Date.now()})
+    .then(() => toast('Player added: ' + name));
+};
+
+// ── PINS ──
+window.updatePin = async function(area) {
+  const val = document.getElementById('pin-' + area).value.trim();
+  if (!val) { toast('Enter a new PIN first', 'error'); return; }
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+  const h = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').substring(0,16);
+  if (area === 'admin') localStorage.setItem('admin_pin_hash', h);
+  window._set(window._ref(window._db, 'pins/' + area), h)
+    .then(() => { toast('PIN updated for ' + area); document.getElementById('pin-' + area).value = ''; });
+};
+
+// ── DRAFT CONFIG ──
+window.saveDraftConfig = function(div) {
+  const rounds = parseInt(document.getElementById(div + '-rounds').value);
+  const teams = parseInt(document.getElementById(div + '-teams-count').value);
+  const rookie = parseInt(document.getElementById(div + '-rookie').value);
+  window._set(window._ref(window._db, 'config/' + div + '/draft'), {rounds, teams, rookieRound: rookie || null})
+    .then(() => toast('Draft config saved for ' + div));
+};
+
+// ── INIT ──
+function initAdmin() {
+  // Load teams
+  ['mens','womens'].forEach(div => {
+    window._onValue(window._ref(window._db, 'config/' + div + '/teams'), snap => {
+      const data = snap.val();
+      const colors = div === 'mens' ? MENS_COLORS : WOMENS_COLORS;
+      if (data) {
+        teamData[div] = Array.isArray(data) ? data : Object.values(data);
+      }
+      buildTeamsTable(div, teamData[div], colors);
+      buildOrderSlots(div, teamData[div]);
+    });
+  });
+
+  // Load players
+  window._onValue(window._ref(window._db, 'players'), snap => {
+    const data = snap.val() || {};
+    allPlayers = Object.values(data);
+    document.getElementById('stat-players-total').textContent = allPlayers.length;
+    filterPlayers();
+  });
+
+  // Live stream stats
+  ['mens','womens'].forEach(div => {
+    window._onValue(window._ref(window._db, 'stream/' + div), snap => {
+      const data = snap.val();
+      if (!data || !data.picks) return;
+      const filled = Object.values(data.picks).filter(p => p.player && p.player.trim()).length;
+      document.getElementById('stat-' + div + '-picks').textContent = filled;
+      document.getElementById(div + '-status-text').textContent = filled + ' picks made';
+      document.getElementById(div + '-dot').classList.toggle('off', filled === 0);
+    });
+  });
+}
+</script>
+</body>
+</html>

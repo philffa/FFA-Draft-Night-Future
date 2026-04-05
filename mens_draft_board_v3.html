@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Men's Draft Board — FFA 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b0d14;
+  --surface: #111520;
+  --surface2: #181d2c;
+  --surface3: #1e2435;
+  --border: rgba(255,255,255,0.07);
+  --border-md: rgba(255,255,255,0.13);
+  --border-hi: rgba(255,255,255,0.22);
+  --text: #e8eaf2;
+  --muted: #4e5671;
+  --muted2: #7a849e;
+  --accent: #f97316;
+  --accent-dim: rgba(249,115,22,0.15);
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warn: #f59e0b;
+  --rookie: #22d3ee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+
+/* PIN */
+.pin-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(8px)}
+.pin-card{background:var(--surface);border:1px solid var(--border-hi);border-radius:14px;padding:2.5rem 2rem;width:100%;max-width:360px;text-align:center}
+.pin-card h2{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:0.4rem}
+.pin-card p{font-size:0.82rem;color:var(--muted2);margin-bottom:1.25rem}
+.pin-input{width:100%;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.7rem;border-radius:8px;font-family:'DM Mono',monospace;font-size:1.4rem;letter-spacing:0.25em;text-align:center;outline:none;transition:border-color 0.15s;margin-bottom:0.75rem}
+.pin-input:focus{border-color:var(--accent)}
+.pin-error{font-size:0.8rem;color:var(--danger);min-height:1.1em;margin-bottom:0.6rem}
+
+/* Header */
+.header{background:var(--surface);border-bottom:2px solid var(--accent);padding:0.85rem 1.5rem;display:flex;align-items:center;gap:1.25rem;position:sticky;top:0;z-index:100}
+.header h1{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--accent);letter-spacing:0.08em;line-height:1}
+.header-sub{font-size:0.72rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px}
+.live-badge{display:flex;align-items:center;gap:6px;background:#ef4444;color:#fff;padding:4px 12px;border-radius:4px;font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* CLOCK BANNER */
+.clock-banner{background:var(--surface2);border-bottom:1px solid var(--border-md);padding:0.75rem 1.5rem;display:flex;align-items:center;gap:1.5rem;min-height:72px}
+.clock-team{flex:1}
+.clock-team-label{font-size:0.67rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px}
+.clock-team-name{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.05em;color:var(--text);line-height:1}
+.clock-pick-info{font-size:0.75rem;color:var(--muted2);margin-top:2px}
+
+.clock-timer-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.clock-timer{font-family:'DM Mono',sans-serif;font-size:2.8rem;font-weight:700;color:var(--text);line-height:1;letter-spacing:0.04em;transition:color 0.3s;min-width:100px;text-align:center}
+.clock-timer.warn{color:var(--warn)}
+.clock-timer.danger{color:var(--danger);animation:blink-danger 0.6s infinite}
+@keyframes blink-danger{0%,100%{opacity:1}50%{opacity:0.5}}
+.clock-timer.done{color:var(--muted)}
+.clock-timer.no-limit{color:var(--muted2);font-size:1.8rem}
+.clock-bar-wrap{width:140px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.clock-bar{height:100%;border-radius:2px;transition:width 0.5s linear,background 0.3s;background:var(--success)}
+.clock-bar.warn{background:var(--warn)}
+.clock-bar.danger{background:var(--danger)}
+
+.clock-actions{display:flex;flex-direction:column;gap:0.4rem}
+.clock-btn{padding:0.4rem 0.85rem;border-radius:6px;border:1px solid var(--border-md);background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer;transition:all 0.12s;white-space:nowrap}
+.clock-btn:hover{background:var(--surface3);border-color:var(--accent);color:var(--accent)}
+.clock-btn.accent{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.clock-btn.accent:hover{background:#fb923c}
+.clock-btn.danger-btn{border-color:var(--danger);color:var(--danger)}
+.clock-btn.danger-btn:hover{background:rgba(239,68,68,0.1)}
+
+.skip-notice{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:0.6rem 1rem;font-size:0.8rem;color:var(--danger);margin:0.5rem 1.5rem;display:none}
+.skip-notice.show{display:block}
+
+/* Announce bar */
+.announce-bar{background:var(--surface2);border-left:3px solid var(--accent);padding:0.65rem 1.25rem;font-size:0.88rem;color:var(--muted2);font-style:italic;margin:0.75rem 1.5rem;border-radius:0 8px 8px 0}
+.announce-bar b{color:var(--text);font-style:normal}
+
+/* Toolbar */
+.toolbar{padding:0.65rem 1.5rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border);background:var(--surface)}
+.btn{padding:0.4rem 0.9rem;border-radius:6px;border:1px solid var(--border-md);background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer;transition:all 0.12s;font-weight:500}
+.btn:hover{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
+.btn.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.danger:hover{background:rgba(239,68,68,0.1)}
+
+/* Panels */
+.panel{background:var(--surface);border-bottom:1px solid var(--border-md);padding:1.25rem 1.5rem;display:none}
+.panel h3{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:0.05em;color:var(--accent);margin-bottom:0.75rem}
+.order-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:1rem}
+.order-card{background:var(--surface2);border:1px solid var(--border-md);border-radius:8px;padding:0.65rem 0.75rem}
+.order-card label{font-size:0.67rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:4px}
+.order-card select{width:100%;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;outline:none;cursor:pointer}
+.trade-sides{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:start;margin-bottom:1rem}
+.trade-side h4{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted2);margin-bottom:0.5rem;font-weight:500}
+.trade-arrow{font-size:1.4rem;color:var(--muted2);text-align:center;padding-top:1.5rem}
+.trade-picks{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.trade-pick-row{display:flex;gap:6px}
+.trade-pick-row select{flex:1;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.38rem 0.65rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.78rem;outline:none}
+.error-msg{font-size:0.78rem;color:var(--danger);min-height:1.1em;margin-bottom:0.6rem}
+
+/* Main */
+.main{padding:1.25rem 1.5rem}
+
+/* Team cards */
+.team-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:1.5rem}
+.team-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.75rem;border-top:3px solid var(--team-color);transition:border-color 0.15s}
+.team-card.on-clock{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent) !important}
+.team-card label{font-size:0.67rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:3px}
+.team-card input{width:100%;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;outline:none;padding:0}
+.team-card input:focus{color:var(--accent)}
+.team-card .gm-name{font-size:0.65rem;color:var(--muted2);margin-top:3px}
+.team-card .mock-indicator{font-size:0.65rem;color:var(--success);margin-top:2px}
+
+/* Board */
+table{width:100%;border-collapse:collapse;font-size:0.82rem}
+thead th{background:var(--surface);color:var(--muted2);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:500;padding:0.55rem 0.75rem;text-align:left;border-bottom:1px solid var(--border-md);position:sticky;top:130px;z-index:10}
+tbody tr{cursor:pointer;transition:background 0.1s}
+tbody tr:hover td{background:var(--surface)}
+tbody tr.selected td{background:rgba(249,115,22,0.08)}
+tbody tr.selected td:first-child{border-left:3px solid var(--accent)}
+tbody tr.on-clock td{background:rgba(249,115,22,0.05)}
+tbody tr.on-clock td:first-child{border-left:3px solid var(--accent)}
+tbody tr.rookie-round td{background:rgba(34,211,238,0.04)}
+tbody tr.round-start td{border-top:1px solid var(--border-md)}
+td{padding:0.52rem 0.75rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+td:nth-child(1),td:nth-child(2),td:nth-child(3){text-align:center;color:var(--muted2);font-size:0.75rem}
+.team-pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:0.73rem;font-weight:500;white-space:nowrap}
+.on-clock-badge{display:inline-block;background:rgba(249,115,22,0.15);color:var(--accent);border:1px solid rgba(249,115,22,0.4);padding:1px 7px;border-radius:20px;font-size:0.66rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-left:6px}
+.rookie-badge{display:inline-block;background:rgba(34,211,238,0.1);color:var(--rookie);border:1px solid rgba(34,211,238,0.3);padding:1px 7px;border-radius:20px;font-size:0.66rem;font-weight:700;margin-left:6px}
+.auto-badge{display:inline-block;background:rgba(34,197,94,0.1);color:var(--success);border:1px solid rgba(34,197,94,0.3);padding:1px 7px;border-radius:20px;font-size:0.66rem;font-weight:700;margin-left:4px}
+.editable{width:100%;border:none;background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;padding:0}
+.editable:focus{color:#fff}
+.editable::placeholder{color:var(--muted)}
+.editable.duplicate{border-bottom:2px solid var(--danger)}
+.round-label{font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:0.05em;color:var(--accent)}
+.rookie-round-label{color:var(--rookie)}
+
+/* Autocomplete */
+.autocomplete-wrap{position:relative;flex:1;min-width:0}
+.autocomplete-wrap input{width:100%}
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--border-md);border-radius:0 0 6px 6px;z-index:999;max-height:180px;overflow-y:auto;display:none}
+.ac-dropdown.open{display:block}
+.ac-option{padding:6px 10px;font-size:0.82rem;color:var(--text);cursor:pointer;font-family:'DM Sans',sans-serif}
+.ac-option:hover,.ac-option.active{background:rgba(249,115,22,0.12);color:var(--accent)}
+
+/* Auto-pick pending overlay */
+.auto-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(4px)}
+.auto-card{background:var(--surface);border:2px solid var(--success);border-radius:14px;padding:2rem;text-align:center;max-width:380px;width:100%}
+.auto-card h2{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--success);letter-spacing:0.08em;margin-bottom:0.5rem}
+.auto-card p{font-size:0.9rem;color:var(--muted2);line-height:1.6}
+.auto-card .player-name-big{font-size:1.4rem;font-weight:700;color:var(--text);margin:0.75rem 0}
+.auto-spinner{width:36px;height:36px;border:3px solid var(--surface3);border-top-color:var(--success);border-radius:50%;animation:spin 0.7s linear infinite;margin:1rem auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Legend */
+.legend{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;font-size:0.75rem;color:var(--muted2)}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:9px;height:9px;border-radius:50%}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:0.75rem 1.1rem;font-size:0.83rem;z-index:999;transform:translateY(3rem);opacity:0;transition:all 0.25s;max-width:300px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.info{border-left:3px solid var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-card">
+    <h2>Men's Draft Board</h2>
+    <p>Enter admin PIN to access the live draft board.</p>
+    <input class="pin-input" type="password" id="pin-input" placeholder="····" maxlength="6"
+      onkeydown="if(event.key==='Enter')checkPin()">
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn active" style="width:100%;padding:0.65rem" onclick="checkPin()">Enter</button>
+  </div>
+</div>
+
+<!-- AUTO-PICK OVERLAY -->
+<div class="auto-overlay" id="auto-overlay" style="display:none">
+  <div class="auto-card">
+    <div class="auto-spinner"></div>
+    <h2>Auto-Selecting</h2>
+    <p id="auto-overlay-msg">Using mock draft queue…</p>
+    <div class="player-name-big" id="auto-player-name">—</div>
+    <p style="font-size:0.78rem;color:var(--muted)">Pick will be confirmed in 3 seconds</p>
+  </div>
+</div>
+
+<div class="header">
+  <div>
+    <h1>Men's Division — FFA Draft 2026</h1>
+    <div class="header-sub">10 Rounds + U18 Rookie · 6 Teams · Snake Draft</div>
+  </div>
+  <div class="live-badge"><div class="live-dot"></div>Live</div>
+</div>
+
+<!-- CLOCK BANNER -->
+<div class="clock-banner" id="clock-banner">
+  <div class="clock-team">
+    <div class="clock-team-label">On The Clock</div>
+    <div class="clock-team-name" id="clock-team-name">Waiting…</div>
+    <div class="clock-pick-info" id="clock-pick-info">Draft hasn't started</div>
+  </div>
+  <div class="clock-timer-wrap">
+    <div class="clock-timer" id="clock-timer">—</div>
+    <div class="clock-bar-wrap"><div class="clock-bar" id="clock-bar" style="width:100%"></div></div>
+  </div>
+  <div class="clock-actions">
+    <button class="clock-btn accent" onclick="adminStartClock()">▶ Start</button>
+    <button class="clock-btn" onclick="adminPauseClock()">⏸ Pause</button>
+    <button class="clock-btn" onclick="adminResetClock()">↺ Reset</button>
+    <button class="clock-btn danger-btn" onclick="adminSkipPick()">⏭ Skip</button>
+  </div>
+</div>
+
+<div class="skip-notice" id="skip-notice"></div>
+
+<div class="announce-bar" id="announce-bar">Select a pick row to see the draft announcement.</div>
+
+<div class="toolbar">
+  <button class="btn" id="order-btn" onclick="togglePanel('order-panel','order-btn')">Set draft order</button>
+  <button class="btn" onclick="resetToBaseOrder()">Reset snake order</button>
+  <button class="btn" id="trade-btn" onclick="togglePanel('trade-panel','trade-btn')">Swap picks (trade)</button>
+  <button class="btn danger" onclick="clearAll()">Clear all picks</button>
+  <button class="btn" onclick="copyAnnouncements()">Copy announcements</button>
+  <button class="btn" onclick="copySummary(this)">Copy summary</button>
+  <button class="btn" onclick="window.open('mock_draft_builder.html?div=mens','_blank')">Open Mock Draft Builder ↗</button>
+</div>
+
+<div class="panel" id="order-panel">
+  <h3>Set Draft Order</h3>
+  <div class="order-grid" id="order-grid"></div>
+  <div class="error-msg" id="order-error"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn active" onclick="confirmDraftOrder()">Confirm order</button>
+    <button class="btn" onclick="togglePanel('order-panel','order-btn')">Cancel</button>
+  </div>
+</div>
+
+<div class="panel" id="trade-panel">
+  <h3>Trade Picks</h3>
+  <div class="trade-sides">
+    <div class="trade-side"><h4>Team A gives</h4><div class="trade-picks" id="trade-a-picks"></div><button class="btn" onclick="addTradePick('a')" style="font-size:0.75rem;padding:0.3rem 0.65rem">+ Add</button></div>
+    <div class="trade-arrow">⇄</div>
+    <div class="trade-side"><h4>Team B gives</h4><div class="trade-picks" id="trade-b-picks"></div><button class="btn" onclick="addTradePick('b')" style="font-size:0.75rem;padding:0.3rem 0.65rem">+ Add</button></div>
+  </div>
+  <div class="error-msg" id="trade-error"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn active" onclick="executeTrade()">Confirm trade</button>
+    <button class="btn" onclick="togglePanel('trade-panel','trade-btn')">Cancel</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="team-grid" id="team-grid"></div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>On clock</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div>Auto-pick (mock draft)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--rookie)"></div>Rookie round</div>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Rd</th><th>Pk</th><th>Team</th><th>Player name</th><th>Position</th></tr></thead>
+    <tbody id="draft-body"></tbody>
+  </table>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const fbApp = initializeApp({
+  apiKey: "AIzaSyCFdWwwTdPi42oAntUszwWFQL4WFaJS9IQ",
+  databaseURL: "https://ffa-draft-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ffa-draft",
+  appId: "1:849324499106:web:9893151b2298198fe437fb"
+});
+const db = getDatabase(fbApp);
+
+const DIVISION = 'mens';
+const DEFAULT_ROUNDS = 10;
+const DEFAULT_TEAMS = 6;
+const ROOKIE_ROUND = 10;
+const TEAM_COLORS = ['#f97316','#22d3ee','#a78bfa','#34d399','#fb7185','#fbbf24'];
+
+let picks = [];
+let teams = Array.from({length:DEFAULT_TEAMS},(_,i)=>'Team '+(i+1));
+let baseOrder = Array.from({length:DEFAULT_TEAMS},(_,i)=>i);
+let selectedIdx = null;
+let clockState = { running: false, startedAt: null, duration: 120 };
+let clockSettings = { autoAdvance: true, useMockDraft: true, warn30: true };
+let clockInterval = null;
+let currentOnClockIdx = null; // index in picks[]
+let skippedTeams = []; // teamSlots that were skipped and need to re-insert
+let playerNames = [];
+let playerPositions = {};
+let draftedOnOtherBoards = {};
+let mockDrafts = {}; // { teamSlot: { branches, activeBranchId } }
+let mockBranchState = {}; // { teamSlot: currentBranchId }
+let acActive = {};
+
+// ─── PIN ───────────────────────────────────────────
+window.checkPin = async function() {
+  const val = document.getElementById('pin-input').value.trim();
+  if (!val) return;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+  const h = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').substring(0,16);
+  const snap = await get(ref(db,'pins/mens'));
+  const stored = snap.val() || '8feaa233aa6acf48'; // default
+  if (h === stored) {
+    document.getElementById('pin-overlay').style.display = 'none';
+  } else {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN.';
+    document.getElementById('pin-input').value = '';
+  }
+};
+
+// ─── SNAKE ORDER ───────────────────────────────────
+function snakeOrder() {
+  picks = [];
+  let overall = 1;
+  for (let r = 1; r <= DEFAULT_ROUNDS; r++) {
+    const order = r%2===1 ? [...baseOrder] : [...baseOrder].reverse();
+    for (let p = 0; p < DEFAULT_TEAMS; p++) {
+      picks.push({overall, round:r, pickInRound:p+1, teamSlot:order[p], player:'', position:'', autoPickUsed:false});
+      overall++;
+    }
+  }
+}
+
+window.resetToBaseOrder = function() {
+  const saved = picks.map(p=>({player:p.player,position:p.position,autoPickUsed:p.autoPickUsed}));
+  snakeOrder();
+  picks.forEach((p,i)=>{p.player=saved[i]?.player||'';p.position=saved[i]?.position||'';p.autoPickUsed=saved[i]?.autoPickUsed||false});
+  renderTable(); buildTradeSelects();
+};
+
+// ─── PANELS ────────────────────────────────────────
+window.togglePanel = function(panelId, btnId) {
+  const panel = document.getElementById(panelId);
+  const btn = document.getElementById(btnId);
+  const open = panel.style.display === 'block';
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.toolbar .btn').forEach(b=>b.classList.remove('active'));
+  if (!open) { panel.style.display = 'block'; btn?.classList.add('active'); }
+  if (panelId === 'order-panel' && !open) buildOrderGrid();
+  if (panelId === 'trade-panel' && !open) buildTradeSelects();
+};
+
+// ─── ORDER ─────────────────────────────────────────
+function buildOrderGrid() {
+  const grid = document.getElementById('order-grid');
+  grid.innerHTML = '';
+  for (let pos = 0; pos < DEFAULT_TEAMS; pos++) {
+    const card = document.createElement('div'); card.className = 'order-card';
+    const opts = teams.map((name,i)=>`<option value="${i}" ${baseOrder[pos]===i?'selected':''}>${name}</option>`).join('');
+    card.innerHTML = `<label>Pick ${pos+1}</label><select id="op-${pos}">${opts}</select>`;
+    grid.appendChild(card);
+  }
+  document.getElementById('order-error').textContent = '';
+}
+
+window.confirmDraftOrder = function() {
+  const newOrder = Array.from({length:DEFAULT_TEAMS},(_,i)=>parseInt(document.getElementById('op-'+i).value));
+  if (new Set(newOrder).size !== DEFAULT_TEAMS) {
+    document.getElementById('order-error').textContent = 'Each team must appear exactly once.'; return;
+  }
+  baseOrder = newOrder;
+  window.resetToBaseOrder();
+  togglePanel('order-panel','order-btn');
+  syncStream();
+};
+
+// ─── TRADE ─────────────────────────────────────────
+function tradeOptions() {
+  return picks.map(p=>`<option value="${p.overall-1}">Pick ${p.overall} (Rd ${p.round} Pk ${p.pickInRound}) — ${teams[p.teamSlot]}</option>`).join('');
+}
+function buildTradeSelects() {
+  ['a','b'].forEach((side,si)=>{
+    const c = document.getElementById('trade-'+side+'-picks'); c.innerHTML = '';
+    const div = document.createElement('div'); div.className = 'trade-pick-row';
+    div.innerHTML = `<select class="trade-sel-${side}">${tradeOptions()}</select><button class="btn" style="font-size:0.72rem;padding:0.25rem 0.6rem" onclick="this.parentElement.remove()">✕</button>`;
+    div.querySelector('select').selectedIndex = si ? Math.min(1, picks.length-1) : 0;
+    c.appendChild(div);
+  });
+  document.getElementById('trade-error').textContent = '';
+}
+window.addTradePick = function(side) {
+  const c = document.getElementById('trade-'+side+'-picks');
+  const div = document.createElement('div'); div.className = 'trade-pick-row';
+  div.innerHTML = `<select class="trade-sel-${side}">${tradeOptions()}</select><button class="btn" style="font-size:0.72rem;padding:0.25rem 0.6rem" onclick="this.parentElement.remove()">✕</button>`;
+  c.appendChild(div);
+};
+window.executeTrade = function() {
+  const errEl = document.getElementById('trade-error');
+  const aSels = [...document.querySelectorAll('.trade-sel-a')].map(s=>parseInt(s.value));
+  const bSels = [...document.querySelectorAll('.trade-sel-b')].map(s=>parseInt(s.value));
+  if (!aSels.length || !bSels.length) { errEl.textContent = 'Each side needs at least one pick.'; return; }
+  if (aSels.length !== bSels.length) { errEl.textContent = 'Both sides must trade the same number of picks.'; return; }
+  if (new Set([...aSels,...bSels]).size !== aSels.length*2) { errEl.textContent = 'A pick cannot appear on both sides.'; return; }
+  errEl.textContent = '';
+  const aSlots = aSels.map(i=>picks[i].teamSlot);
+  const bSlots = bSels.map(i=>picks[i].teamSlot);
+  aSels.forEach((i,idx)=>picks[i].teamSlot=bSlots[idx]);
+  bSels.forEach((i,idx)=>picks[i].teamSlot=aSlots[idx]);
+  renderTable(); buildTradeSelects(); syncStream();
+};
+
+// ─── TEAM CARDS ────────────────────────────────────
+function buildTeamCards() {
+  const grid = document.getElementById('team-grid'); grid.innerHTML = '';
+  teams.forEach((name,i)=>{
+    const card = document.createElement('div');
+    card.className = 'team-card'; card.id = 'team-card-'+i;
+    card.style.setProperty('--team-color', TEAM_COLORS[i]);
+    const hasMock = mockDrafts[i] && Object.keys(mockDrafts[i].branches||{}).some(b=>Object.keys(mockDrafts[i].branches[b].picks||{}).length>0);
+    card.innerHTML = `<label>Team ${i+1}</label>
+      <input value="${name}" oninput="teams[${i}]=this.value;renderTable();buildTradeSelects();syncStream()">
+      ${hasMock ? `<div class="mock-indicator">✓ Mock draft ready</div>` : ''}`;
+    grid.appendChild(card);
+  });
+}
+
+// ─── TABLE ─────────────────────────────────────────
+function ord(n){return['st','nd','rd'][((n+90)%100-10)%10-1]||'th'}
+function isRookie(r){return r===ROOKIE_ROUND}
+
+function renderTable() {
+  const tbody = document.getElementById('draft-body'); tbody.innerHTML = '';
+  const nextPickIdx = picks.findIndex(p=>!p.player);
+  picks.forEach((p,i)=>{
+    const tr = document.createElement('tr');
+    if(p.pickInRound===1) tr.classList.add('round-start');
+    if(isRookie(p.round)) tr.classList.add('rookie-round');
+    if(selectedIdx===i) tr.classList.add('selected');
+    if(i===nextPickIdx && clockState.running) tr.classList.add('on-clock');
+    tr.onclick=()=>selectPick(i);
+
+    const color = TEAM_COLORS[p.teamSlot];
+    const teamName = teams[p.teamSlot]||`Team ${p.teamSlot+1}`;
+    const isNext = i===nextPickIdx;
+    const rdLabel = isRookie(p.round)
+      ? `<span class="round-label rookie-round-label">${p.round}</span>`
+      : `<span class="round-label">${p.round}</span>`;
+    const onClockBadge = isNext && clockState.running ? `<span class="on-clock-badge">On Clock</span>` : '';
+    const rookieBadge = isRookie(p.round) ? `<span class="rookie-badge">U18</span>` : '';
+    const autoBadge = p.autoPickUsed ? `<span class="auto-badge">Auto</span>` : '';
+
+    tr.innerHTML = `
+      <td>${p.overall}</td><td>${rdLabel}</td><td>${p.pickInRound}</td>
+      <td><span class="team-pill" style="background:${color}22;color:${color}">${teamName}</span>${onClockBadge}${rookieBadge}</td>
+      <td>
+        <div class="autocomplete-wrap" onclick="event.stopPropagation()">
+          <input class="editable player-input" data-idx="${i}" value="${p.player}" placeholder="Player name"
+            oninput="picks[${i}].player=this.value;if(selectedIdx===${i})updateAnnounce(${i});acInput(this,${i})"
+            onblur="setTimeout(()=>acClose(${i}),150)"
+            onkeydown="acKey(event,${i});if(event.key==='Enter')onPickEntered(${i})"
+            onclick="selectPick(${i})">
+          <div class="ac-dropdown" id="ac-${i}"></div>
+        </div>
+        ${autoBadge}
+      </td>
+      <td><input class="editable" value="${p.position}" placeholder="Position"
+        oninput="picks[${i}].position=this.value;if(selectedIdx===${i})updateAnnounce(${i});onPickEntered(${i})"
+        onclick="event.stopPropagation();selectPick(${i})"></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+window.selectPick = function(i) {
+  selectedIdx = i;
+  document.querySelectorAll('tbody tr').forEach((r,idx)=>r.classList.toggle('selected',idx===i));
+  updateAnnounce(i);
+};
+
+window.onPickEntered = function(i) {
+  checkForDuplicates();
+  syncStream();
+  // If this is the current on-clock pick and it now has a player, advance clock
+  const nextPickIdx = picks.findIndex(p=>!p.player);
+  if (i < nextPickIdx || (i === nextPickIdx - 1 && picks[i].player)) {
+    advanceOnClock();
+  }
+};
+
+function updateAnnounce(i) {
+  const p = picks[i];
+  const team = teams[p.teamSlot]||`Team ${p.teamSlot+1}`;
+  const player = p.player||'[Player Name]';
+  const pos = p.position||'[Position]';
+  const bar = document.getElementById('announce-bar');
+  const rookiePart = isRookie(p.round)?`, <b>U18 Rookie pick</b>`:'';
+  bar.innerHTML = `"With the <b>${p.pickInRound}${ord(p.pickInRound)} pick of Round ${p.round}</b>, <b>${team}</b> selects <b>${player}</b>, <b>${pos}</b>${rookiePart}."`;
+}
+
+// ─── CLOCK ─────────────────────────────────────────
+function getNextPickIdx() {
+  return picks.findIndex(p=>!p.player);
+}
+
+function updateClockDisplay() {
+  const idx = getNextPickIdx();
+  if (idx === -1) {
+    document.getElementById('clock-team-name').textContent = 'Draft Complete!';
+    document.getElementById('clock-pick-info').textContent = 'All picks have been made';
+    document.getElementById('clock-timer').textContent = '—';
+    document.getElementById('clock-timer').className = 'clock-timer done';
+    return;
+  }
+  const p = picks[idx];
+  const team = teams[p.teamSlot]||`Team ${p.teamSlot+1}`;
+  document.getElementById('clock-team-name').textContent = team;
+  document.getElementById('clock-team-name').style.color = TEAM_COLORS[p.teamSlot];
+  document.getElementById('clock-pick-info').textContent = `Pick #${p.overall} · Round ${p.round} · Pick ${p.pickInRound} of round`;
+  // Highlight on-clock team card
+  document.querySelectorAll('.team-card').forEach(c=>c.classList.remove('on-clock'));
+  const tc = document.getElementById('team-card-'+p.teamSlot);
+  if(tc) tc.classList.add('on-clock');
+}
+
+function startLocalClock() {
+  if (clockInterval) clearInterval(clockInterval);
+  if (!clockState.running || !clockState.duration) return;
+  clockInterval = setInterval(() => {
+    const elapsed = (Date.now() - clockState.startedAt) / 1000;
+    const remaining = Math.max(0, clockState.duration - elapsed);
+    const m = Math.floor(remaining/60);
+    const s = Math.floor(remaining%60);
+    const timerEl = document.getElementById('clock-timer');
+    const barEl = document.getElementById('clock-bar');
+    const pct = (remaining / clockState.duration) * 100;
+
+    timerEl.textContent = m + ':' + String(s).padStart(2,'0');
+    barEl.style.width = pct + '%';
+
+    timerEl.className = 'clock-timer';
+    barEl.className = 'clock-bar';
+    if (remaining <= 10) { timerEl.classList.add('danger'); barEl.classList.add('danger'); }
+    else if (remaining <= 30) { timerEl.classList.add('warn'); barEl.classList.add('warn'); }
+
+    if (remaining === 0) {
+      clearInterval(clockInterval);
+      handleClockTimeout();
+    }
+  }, 200);
+}
+
+async function handleClockTimeout() {
+  const idx = getNextPickIdx();
+  if (idx === -1) return;
+  const p = picks[idx];
+  const team = teams[p.teamSlot]||`Team ${p.teamSlot+1}`;
+
+  // Try mock draft auto-pick
+  if (clockSettings.useMockDraft) {
+    const autoPick = getNextMockDraftPick(p.teamSlot, idx);
+    if (autoPick) {
+      showAutoPickOverlay(team, autoPick.player, autoPick.position);
+      await sleep(3000);
+      picks[idx].player = autoPick.player;
+      picks[idx].position = autoPick.position;
+      picks[idx].autoPickUsed = true;
+      hideAutoPickOverlay();
+      // Update mock branch state based on conditions
+      updateMockBranchState(p.teamSlot, p.overall, autoPick);
+      renderTable();
+      syncStream();
+      toast(`Auto-pick: ${autoPick.player} for ${team}`, 'success');
+      // Restart clock for next pick
+      restartClock();
+      return;
+    }
+  }
+
+  // No mock pick available — skip this team, re-insert behind next
+  if (clockSettings.autoAdvance) {
+    showSkipNotice(team, p);
+    // Re-insert: swap this pick with the pick after the next team's pick
+    // Simple approach: move this pick to after pick[idx+1]
+    if (idx + 1 < picks.length) {
+      const thisTeamSlot = p.teamSlot;
+      // Remove from current position, insert after next pick
+      const [removed] = picks.splice(idx, 1);
+      // Re-number overall isn't needed for functionality; re-insert 2 spots later
+      const insertAt = Math.min(idx + 1, picks.length);
+      picks.splice(insertAt, 0, removed);
+      toast(`⏭ Clock ran out for ${team} — moved behind next pick`, 'info');
+    }
+    renderTable();
+    syncStream();
+    restartClock();
+  }
+}
+
+function getNextMockDraftPick(teamSlot, pickIdx) {
+  const mockData = mockDrafts[teamSlot];
+  if (!mockData || !mockData.branches) return null;
+  const branchId = mockBranchState[teamSlot] || 'default';
+  const branch = mockData.branches[branchId];
+  if (!branch || !branch.picks) return null;
+
+  // Find the overall pick number for this slot
+  const p = picks[pickIdx];
+  // Look for a pick in the mock for this overall number
+  const mockPick = branch.picks[p.overall];
+  if (mockPick && mockPick.player && !picks.some(pp=>pp.player===mockPick.player)) {
+    return mockPick;
+  }
+  // Fallback: find next unused pick in branch order
+  const mySlots = picks.filter((pp,i)=>pp.teamSlot===teamSlot && i>=pickIdx).map(pp=>pp.overall);
+  for (const overall of mySlots) {
+    const mp = branch.picks[overall];
+    if (mp && mp.player && !picks.some(pp=>pp.player===mp.player)) return mp;
+  }
+  return null;
+}
+
+function updateMockBranchState(teamSlot, overall, pickedPlayer) {
+  const mockData = mockDrafts[teamSlot];
+  if (!mockData) return;
+  const branchId = mockBranchState[teamSlot] || 'default';
+  const branch = mockData.branches?.[branchId];
+  if (!branch) return;
+  const cond = branch.conditions?.[overall];
+  if (!cond) return;
+  const matches =
+    cond.type === 'any' ||
+    (cond.type === 'position' && pickedPlayer.position === cond.value) ||
+    (cond.type === 'player' && pickedPlayer.player === cond.value);
+  if (matches) {
+    mockBranchState[teamSlot] = cond.targetBranch;
+    toast(`Branch switch for ${teams[teamSlot]}: "${mockDrafts[teamSlot]?.branches?.[cond.targetBranch]?.name || cond.targetBranch}"`, 'info');
+  }
+}
+
+function showAutoPickOverlay(team, player, pos) {
+  document.getElementById('auto-overlay-msg').textContent = `Using ${team}'s mock draft queue…`;
+  document.getElementById('auto-player-name').textContent = `${player} (${pos||'—'})`;
+  document.getElementById('auto-overlay').style.display = 'flex';
+}
+function hideAutoPickOverlay() {
+  document.getElementById('auto-overlay').style.display = 'none';
+}
+
+function showSkipNotice(team, p) {
+  const notice = document.getElementById('skip-notice');
+  notice.textContent = `⏭ ${team} ran out of time on Pick #${p.overall} — they've been moved behind the next pick. No mock draft was available.`;
+  notice.classList.add('show');
+  setTimeout(()=>notice.classList.remove('show'),6000);
+}
+
+function advanceOnClock() {
+  // Called when a pick is made — restart clock for next pick
+  if (clockState.running) restartClock();
+  updateClockDisplay();
+  renderTable();
+}
+
+function restartClock() {
+  clockState.startedAt = Date.now();
+  set(ref(db,'clock/mens/state'), {
+    running: true,
+    startedAt: clockState.startedAt,
+    duration: clockState.duration
+  });
+  startLocalClock();
+}
+
+// Admin clock controls
+window.adminStartClock = function() {
+  restartClock();
+};
+window.adminPauseClock = function() {
+  clockState.running = false;
+  clearInterval(clockInterval);
+  set(ref(db,'clock/mens/state'), {...clockState, running:false});
+  document.getElementById('clock-timer').className = 'clock-timer';
+};
+window.adminResetClock = function() {
+  clockState.running = false;
+  clearInterval(clockInterval);
+  document.getElementById('clock-timer').textContent = clockState.duration ? Math.floor(clockState.duration/60)+':'+String(clockState.duration%60).padStart(2,'0') : '—';
+  document.getElementById('clock-bar').style.width = '100%';
+  document.getElementById('clock-bar').className = 'clock-bar';
+};
+window.adminSkipPick = function() {
+  handleClockTimeout();
+};
+
+// ─── SYNC ──────────────────────────────────────────
+function syncStream() {
+  const pickData = {};
+  picks.forEach((p,i)=>{pickData[i]={player:p.player,position:p.position,teamSlot:p.teamSlot}});
+  set(ref(db,'stream/mens'),{picks:pickData,teams});
+  // Also sync drafted
+  const drafted = {};
+  picks.forEach(p=>{if(p.player)drafted[p.player]=true});
+  set(ref(db,'drafted/mens'),drafted);
+}
+
+// ─── PLAYERS CSV ───────────────────────────────────
+async function loadPlayerCSV() {
+  try {
+    const res = await fetch('Mens 2026 Draft Declarations.csv');
+    if (!res.ok) return;
+    const text = await res.text();
+    const rows = parseCSV(text).slice(1);
+    playerNames = rows.map(r=>r[0]).filter(Boolean);
+    rows.forEach(r=>{if(r[0]&&r[4])playerPositions[r[0].trim()]=r[4].trim()});
+  } catch(e) {
+    // No CSV — fallback to Firebase players
+    const snap = await get(ref(db,'players'));
+    const data = snap.val()||{};
+    Object.values(data).filter(p=>p.division==='mens').forEach(p=>{
+      if(p.name){playerNames.push(p.name);if(p.position)playerPositions[p.name]=p.position}
+    });
+  }
+}
+
+function parseCSV(text) {
+  const rows=[]; let i=0,n=text.length;
+  while(i<n){
+    const row=[]; while(i<n){
+      let f='';
+      if(text[i]==='"'){i++;while(i<n){if(text[i]==='"'&&i+1<n&&text[i+1]==='"'){f+='"';i+=2}else if(text[i]==='"'){i++;break}else{f+=text[i++]}}
+      }else{while(i<n&&text[i]!==','&&text[i]!=='\n'&&text[i]!=='\r')f+=text[i++]}
+      row.push(f.trim());
+      if(i<n&&text[i]===',')i++;else break;
+    }
+    if(i<n&&text[i]==='\r')i++;if(i<n&&text[i]==='\n')i++;
+    if(row.length)rows.push(row);
+  }
+  return rows;
+}
+
+// ─── AUTOCOMPLETE ──────────────────────────────────
+window.acInput = function(input,idx) {
+  const val=input.value.trim().toLowerCase();
+  const dd=document.getElementById('ac-'+idx);
+  if(!dd||val.length<2){dd?.classList.remove('open');return}
+  const used = new Set(picks.filter((_,i)=>i!==idx).map(p=>p.player.toLowerCase()));
+  const matches=playerNames.filter(n=>n.toLowerCase().startsWith(val)&&!used.has(n.toLowerCase())&&!draftedOnOtherBoards[n]).slice(0,8);
+  if(!matches.length){dd.classList.remove('open');return}
+  acActive[idx]=-1;
+  dd.innerHTML=matches.map(m=>`<div class="ac-option" data-val="${m}" onmousedown="acSelect(${idx},'${m.replace(/'/g,"\\'")}')">${m}</div>`).join('');
+  dd.classList.add('open');
+};
+window.acSelect = function(idx,name) {
+  picks[idx].player=name;
+  const inp=[...document.querySelectorAll('input.player-input')].find(el=>el.dataset.idx==idx);
+  if(inp)inp.value=name;
+  const pos=playerPositions[name]||'';
+  if(pos){picks[idx].position=pos;const row=document.querySelectorAll('tbody tr')[idx];if(row){const pi=row.querySelectorAll('input.editable')[1];if(pi)pi.value=pos}}
+  acClose(idx);
+  if(selectedIdx===idx)updateAnnounce(idx);
+  checkForDuplicates();
+  syncStream();
+  onPickEntered(idx);
+};
+window.acClose=function(idx){document.getElementById('ac-'+idx)?.classList.remove('open')};
+window.acKey=function(e,idx){
+  const dd=document.getElementById('ac-'+idx);
+  if(!dd||!dd.classList.contains('open'))return;
+  const opts=dd.querySelectorAll('.ac-option');
+  if(!opts.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();acActive[idx]=Math.min((acActive[idx]||=-1)+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('active',i===acActive[idx]))}
+  else if(e.key==='ArrowUp'){e.preventDefault();acActive[idx]=Math.max((acActive[idx]||0)-1,0);opts.forEach((o,i)=>o.classList.toggle('active',i===acActive[idx]))}
+  else if(e.key==='Enter'&&acActive[idx]>=0){e.preventDefault();acSelect(idx,opts[acActive[idx]].dataset.val)}
+  else if(e.key==='Escape')acClose(idx);
+};
+
+function checkForDuplicates() {
+  const counts={};
+  picks.forEach(p=>{const n=p.player.trim().toLowerCase();if(n)counts[n]=(counts[n]||0)+1});
+  document.querySelectorAll('input.player-input').forEach(inp=>{
+    const n=inp.value.trim().toLowerCase();
+    inp.classList.toggle('duplicate',n&&counts[n]>1);
+  });
+}
+
+// ─── CLEAR ─────────────────────────────────────────
+window.clearAll = function() {
+  if(!confirm('Clear all picks?'))return;
+  picks.forEach(p=>{p.player='';p.position='';p.autoPickUsed=false});
+  selectedIdx=null;
+  document.getElementById('announce-bar').textContent='Select a pick row to see the announcement.';
+  renderTable(); syncStream();
+};
+
+// ─── COPY ──────────────────────────────────────────
+window.copyAnnouncements=function(){
+  const lines=picks.map(p=>{
+    const team=teams[p.teamSlot]||`Team ${p.teamSlot+1}`;
+    const rookiePart=isRookie(p.round)?', U18 Rookie pick':'';
+    return `"With the ${p.pickInRound}${ord(p.pickInRound)} pick of Round ${p.round}, ${team} selects ${p.player||'[Player Name]'}, ${p.position||'[Position]'}${rookiePart}."`;
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('Announcements copied!'));
+};
+window.copySummary=function(btn){
+  const lines=['FFA DRAFT 2026 - MENS','Draft order: '+baseOrder.map((slot,i)=>(i+1)+'. '+teams[slot]).join(', '),''];
+  let cur=0;
+  picks.forEach(p=>{
+    if(p.round!==cur){cur=p.round;lines.push(p.round===ROOKIE_ROUND?'-- Round '+p.round+' (U18 Rookie) --':'-- Round '+p.round+' --')}
+    lines.push('  Pick '+p.pickInRound+': '+(teams[p.teamSlot]||'Team '+(p.teamSlot+1))+' | '+(p.player||'-')+' | '+(p.position||'-')+(p.autoPickUsed?' [AUTO]':''));
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy summary',2000)});
+};
+
+// ─── TOAST ─────────────────────────────────────────
+window.toast=function(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3000);
+};
+
+// ─── HELPERS ───────────────────────────────────────
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// ─── FIREBASE LISTENERS ────────────────────────────
+function setupListeners() {
+  // Clock settings from admin
+  onValue(ref(db,'clock/settings'), snap=>{
+    const d=snap.val();
+    if(!d)return;
+    if(d.duration!==undefined)clockState.duration=d.duration;
+    clockSettings={autoAdvance:d.autoAdvance??true,useMockDraft:d.useMockDraft??true,warn30:d.warn30??true};
+  });
+
+  // Clock state for this division
+  onValue(ref(db,'clock/mens/state'), snap=>{
+    const d=snap.val();
+    if(!d)return;
+    const wasRunning=clockState.running;
+    clockState={...clockState,...d};
+    if(d.running&&(!wasRunning||d.startedAt!==clockState.startedAt)){
+      startLocalClock();
+    } else if(!d.running){
+      clearInterval(clockInterval);
+    }
+    updateClockDisplay();
+  });
+
+  // Admin skip trigger
+  onValue(ref(db,'clock/mens/skip'), snap=>{
+    const t=snap.val();
+    if(t&&t>Date.now()-5000)handleClockTimeout();
+  });
+
+  // Live stream state (to sync between sessions)
+  onValue(ref(db,'stream/mens'), snap=>{
+    const data=snap.val();
+    if(!data)return;
+    if(data.teams){teams=[...data.teams];buildTeamCards()}
+    if(data.picks){
+      snakeOrder();
+      Object.entries(data.picks).forEach(([key,val])=>{
+        const idx=parseInt(key);
+        if(picks[idx]){picks[idx].player=val.player||'';picks[idx].position=val.position||'';picks[idx].teamSlot=val.teamSlot??picks[idx].teamSlot}
+      });
+    }
+    renderTable(); updateClockDisplay();
+  });
+
+  // Other division drafted (to grey out in autocomplete)
+  onValue(ref(db,'drafted/womens'), snap=>{
+    // Not grayed here — same players can be in both divisions
+  });
+
+  // Mock drafts for all teams
+  for(let t=0;t<DEFAULT_TEAMS;t++){
+    const slot=t;
+    onValue(ref(db,'mockDraft/mens/'+slot), snap=>{
+      const d=snap.val();
+      if(d){mockDrafts[slot]=d;if(!mockBranchState[slot])mockBranchState[slot]='default'}
+      buildTeamCards();
+    });
+  }
+}
+
+// ─── BOOT ──────────────────────────────────────────
+snakeOrder();
+buildTeamCards();
+renderTable();
+updateClockDisplay();
+loadPlayerCSV();
+setupListeners();
+buildTradeSelects();
+</script>
+</body>
+</html>
