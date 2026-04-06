@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Men's Draft Board — FFA 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d14;--surface:#111520;--surface2:#181d2c;--surface3:#1e2435;--border:rgba(255,255,255,0.07);--border-md:rgba(255,255,255,0.13);--border-hi:rgba(255,255,255,0.22);--text:#e8eaf2;--muted:#4e5671;--muted2:#7a849e;--accent:#f97316;--accent-dim:rgba(249,115,22,0.15);--success:#22c55e;--danger:#ef4444;--warn:#f59e0b;--rookie:#22d3ee}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+
+/* PIN */
+.pin-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(8px)}
+.pin-card{background:var(--surface);border:1px solid var(--border-hi);border-radius:14px;padding:2.5rem 2rem;width:100%;max-width:340px;text-align:center}
+.pin-card h2{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent);letter-spacing:0.1em;margin-bottom:0.4rem}
+.pin-card p{font-size:0.82rem;color:var(--muted2);margin-bottom:1.25rem}
+.pin-inp{width:100%;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.7rem;border-radius:8px;font-family:'DM Mono',monospace;font-size:1.4rem;letter-spacing:0.25em;text-align:center;outline:none;transition:border-color 0.15s;margin-bottom:0.75rem}
+.pin-inp:focus{border-color:var(--accent)}
+.pin-err{font-size:0.8rem;color:var(--danger);min-height:1.1em;margin-bottom:0.6rem}
+
+/* NAV HEADER */
+.site-header{background:var(--surface);border-bottom:2px solid var(--accent);padding:0.72rem 1.5rem;display:flex;align-items:center;gap:1rem;text-decoration:none;transition:background 0.15s;flex-shrink:0;position:sticky;top:0;z-index:100}
+.site-header:hover .header-back{color:var(--accent)}
+.header-title h1{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--accent);letter-spacing:0.08em;line-height:1}
+.header-title p{font-size:0.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px}
+.live-badge{display:flex;align-items:center;gap:6px;background:#ef4444;color:#fff;padding:4px 12px;border-radius:4px;font-size:0.72rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.header-back{margin-left:auto;font-size:0.73rem;color:var(--muted2);transition:color 0.15s}
+
+/* CLOCK BANNER */
+.clock-banner{background:var(--surface2);border-bottom:1px solid var(--border-md);padding:0.7rem 1.5rem;display:flex;align-items:center;gap:1.5rem;min-height:68px;flex-shrink:0}
+.clock-team{flex:1}
+.clock-team-label{font-size:0.65rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px}
+.clock-team-name{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.05em;line-height:1}
+.clock-pick-info{font-size:0.73rem;color:var(--muted2);margin-top:2px}
+.clock-timer-wrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+.clock-timer{font-family:'DM Mono',monospace;font-size:2.6rem;font-weight:700;line-height:1;letter-spacing:0.04em;transition:color 0.3s;min-width:95px;text-align:center}
+.clock-timer.warn{color:var(--warn)}
+.clock-timer.danger{color:var(--danger);animation:blink-d 0.6s infinite}
+@keyframes blink-d{0%,100%{opacity:1}50%{opacity:0.45}}
+.clock-timer.done{color:var(--muted)}
+.bar-wrap{width:130px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.bar{height:100%;border-radius:2px;transition:width 0.5s linear,background 0.3s;background:var(--success)}
+.bar.warn{background:var(--warn)}.bar.danger{background:var(--danger)}
+.clock-acts{display:flex;flex-direction:column;gap:0.35rem}
+.cbtn{padding:0.35rem 0.8rem;border-radius:6px;border:1px solid var(--border-md);background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.76rem;cursor:pointer;transition:all 0.12s;white-space:nowrap}
+.cbtn:hover{background:var(--surface3);border-color:var(--accent);color:var(--accent)}
+.cbtn.go{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.cbtn.go:hover{background:#fb923c}
+.cbtn.red{border-color:var(--danger);color:var(--danger)}
+.cbtn.red:hover{background:rgba(239,68,68,0.1)}
+.skip-notice{background:rgba(239,68,68,0.07);border-bottom:1px solid rgba(239,68,68,0.2);padding:0.5rem 1.5rem;font-size:0.8rem;color:var(--danger);display:none;flex-shrink:0}
+.skip-notice.show{display:block}
+
+/* ANNOUNCE */
+.announce-bar{background:var(--surface2);border-left:3px solid var(--accent);padding:0.58rem 1.2rem;font-size:0.87rem;color:var(--muted2);font-style:italic;margin:0.65rem 1.5rem;border-radius:0 7px 7px 0;flex-shrink:0}
+.announce-bar b{color:var(--text);font-style:normal}
+
+/* TOOLBAR */
+.toolbar{padding:0.6rem 1.5rem;display:flex;gap:0.45rem;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.btn{padding:0.38rem 0.85rem;border-radius:6px;border:1px solid var(--border-md);background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.77rem;cursor:pointer;transition:all 0.12s;font-weight:500}
+.btn:hover{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
+.btn.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.danger:hover{background:rgba(239,68,68,0.1)}
+
+/* PANELS */
+.panel{background:var(--surface);border-bottom:1px solid var(--border-md);padding:1.15rem 1.5rem;display:none;flex-shrink:0}
+.panel h3{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.05em;color:var(--accent);margin-bottom:0.7rem}
+.order-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:0.9rem}
+.order-card{background:var(--surface2);border:1px solid var(--border-md);border-radius:8px;padding:0.6rem 0.7rem}
+.order-card label{font-size:0.65rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:3px}
+.order-card select{width:100%;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;outline:none;cursor:pointer}
+.trade-sides{display:grid;grid-template-columns:1fr auto 1fr;gap:0.9rem;align-items:start;margin-bottom:0.9rem}
+.trade-side h4{font-size:0.67rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted2);margin-bottom:0.45rem;font-weight:500}
+.trade-picks{display:flex;flex-direction:column;gap:5px;margin-bottom:5px}
+.trade-pick-row{display:flex;gap:5px}
+.trade-pick-row select{flex:1;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.35rem 0.6rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.77rem;outline:none}
+.err-msg{font-size:0.77rem;color:var(--danger);min-height:1em;margin-bottom:0.5rem}
+
+/* MAIN */
+.main-area{flex:1;overflow-y:auto;padding:1.15rem 1.5rem}
+.team-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:1.25rem}
+.team-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.55rem 0.7rem;border-top:3px solid var(--tc);transition:box-shadow 0.15s}
+.team-card.on-clock{box-shadow:0 0 0 2px var(--accent)}
+.team-card label{font-size:0.65rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:3px}
+.team-card input{width:100%;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.8rem;font-weight:500;outline:none;padding:0}
+.team-card input:focus{color:var(--accent)}
+.team-card .gm-sub{font-size:0.63rem;color:var(--muted2);margin-top:2px}
+.mock-ready{font-size:0.63rem;color:var(--success);margin-top:1px}
+.legend{display:flex;gap:0.9rem;flex-wrap:wrap;margin-bottom:0.9rem;align-items:center;font-size:0.74rem;color:var(--muted2)}
+.ldot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:0.81rem}
+thead th{background:var(--surface);color:var(--muted2);font-size:0.67rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:500;padding:0.52rem 0.72rem;text-align:left;border-bottom:1px solid var(--border-md);position:sticky;top:0;z-index:5}
+tbody tr{cursor:pointer;transition:background 0.1s}
+tbody tr:hover td{background:var(--surface)}
+tbody tr.selected td{background:rgba(249,115,22,0.07)}
+tbody tr.selected td:first-child{border-left:3px solid var(--accent)}
+tbody tr.on-clock-row td{background:rgba(249,115,22,0.04)}
+tbody tr.rookie-round td{background:rgba(34,211,238,0.04)}
+tbody tr.round-start td{border-top:1px solid var(--border-md)}
+td{padding:0.5rem 0.72rem;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+td:nth-child(1),td:nth-child(2),td:nth-child(3){text-align:center;color:var(--muted2);font-size:0.73rem}
+.tpill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.71rem;font-weight:500;white-space:nowrap}
+.ocbadge{display:inline-block;background:rgba(249,115,22,0.14);color:var(--accent);border:1px solid rgba(249,115,22,0.35);padding:1px 6px;border-radius:20px;font-size:0.63rem;font-weight:700;text-transform:uppercase;margin-left:5px}
+.rkbadge{display:inline-block;background:rgba(34,211,238,0.1);color:var(--rookie);border:1px solid rgba(34,211,238,0.3);padding:1px 6px;border-radius:20px;font-size:0.63rem;font-weight:700;margin-left:5px}
+.autobadge{display:inline-block;background:rgba(34,197,94,0.1);color:var(--success);border:1px solid rgba(34,197,94,0.3);padding:1px 6px;border-radius:20px;font-size:0.63rem;font-weight:700;margin-left:4px}
+.editable{width:100%;border:none;background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.81rem;outline:none;padding:0}
+.editable:focus{color:#fff}
+.editable::placeholder{color:var(--muted)}
+.editable.dup{border-bottom:2px solid var(--danger)}
+.round-lbl{font-family:'Bebas Neue',sans-serif;font-size:0.93rem;letter-spacing:0.05em;color:var(--accent)}
+.rookie-lbl{color:var(--rookie)}
+
+/* AUTOCOMPLETE */
+.ac-wrap{position:relative;flex:1;min-width:0}
+.ac-wrap input{width:100%}
+.ac-dd{position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--border-md);border-radius:0 0 6px 6px;z-index:999;max-height:180px;overflow-y:auto;display:none}
+.ac-dd.open{display:block}
+.ac-opt{padding:5px 10px;font-size:0.81rem;color:var(--text);cursor:pointer}
+.ac-opt:hover,.ac-opt.hi{background:rgba(249,115,22,0.1);color:var(--accent)}
+
+/* AUTO PICK OVERLAY */
+.auto-ov{position:fixed;inset:0;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;z-index:400;backdrop-filter:blur(4px)}
+.auto-card{background:var(--surface);border:2px solid var(--success);border-radius:14px;padding:2rem;text-align:center;max-width:360px;width:100%}
+.auto-card h2{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--success);letter-spacing:0.08em;margin-bottom:0.45rem}
+.auto-card p{font-size:0.88rem;color:var(--muted2);line-height:1.6}
+.auto-name{font-size:1.3rem;font-weight:700;color:var(--text);margin:0.65rem 0}
+.spinner{width:32px;height:32px;border:3px solid var(--surface3);border-top-color:var(--success);border-radius:50%;animation:spin 0.7s linear infinite;margin:0.9rem auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:0.72rem 1.05rem;font-size:0.82rem;z-index:999;transform:translateY(3rem);opacity:0;transition:all 0.25s;max-width:290px;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.info{border-left:3px solid var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-card">
+    <h2>Men's Draft Board</h2>
+    <p>Enter the draft board PIN to continue.</p>
+    <input class="pin-inp" type="password" id="pin-input" placeholder="· · · ·" maxlength="6" onkeydown="if(event.key==='Enter')checkPin()">
+    <div class="pin-err" id="pin-err"></div>
+    <button class="btn active" style="width:100%;padding:0.62rem" onclick="checkPin()">Enter</button>
+  </div>
+</div>
+
+<!-- AUTO PICK OVERLAY -->
+<div class="auto-ov" id="auto-ov" style="display:none">
+  <div class="auto-card">
+    <div class="spinner"></div>
+    <h2>Auto-Selecting</h2>
+    <p id="auto-msg">Using mock draft queue…</p>
+    <div class="auto-name" id="auto-player">—</div>
+    <p style="font-size:0.76rem;color:var(--muted)">Confirming in 3 seconds…</p>
+  </div>
+</div>
+
+<!-- NAV HEADER (click → home) -->
+<a class="site-header" href="index.html">
+  <div class="header-title">
+    <h1>Men's Division — FFA Draft 2026</h1>
+    <p>10 Rounds + U18 Rookie · 6 Teams · Snake Draft</p>
+  </div>
+  <div class="live-badge"><div class="live-dot"></div>Live</div>
+  <div class="header-back">← Home</div>
+</a>
+
+<!-- CLOCK BANNER -->
+<div class="clock-banner">
+  <div class="clock-team">
+    <div class="clock-team-label">On The Clock</div>
+    <div class="clock-team-name" id="cl-team">Waiting…</div>
+    <div class="clock-pick-info" id="cl-info">Draft hasn't started</div>
+  </div>
+  <div class="clock-timer-wrap">
+    <div class="clock-timer" id="cl-timer">—</div>
+    <div class="bar-wrap"><div class="bar" id="cl-bar" style="width:100%"></div></div>
+  </div>
+  <div class="clock-acts">
+    <button class="cbtn go" onclick="adminStart()">▶ Start</button>
+    <button class="cbtn" onclick="adminPause()">⏸ Pause</button>
+    <button class="cbtn" onclick="adminReset()">↺ Reset</button>
+    <button class="cbtn red" onclick="adminSkip()">⏭ Skip</button>
+  </div>
+</div>
+
+<div class="skip-notice" id="skip-notice"></div>
+<div class="announce-bar" id="announce-bar">Select a pick row to see the draft announcement.</div>
+
+<div class="toolbar">
+  <button class="btn" id="btn-order" onclick="togglePanel('p-order','btn-order')">Set draft order</button>
+  <button class="btn" onclick="resetToBase()">Reset snake order</button>
+  <button class="btn" id="btn-trade" onclick="togglePanel('p-trade','btn-trade')">Swap picks (trade)</button>
+  <button class="btn danger" onclick="clearAll()">Clear all picks</button>
+  <button class="btn" onclick="copyAnnounce()">Copy announcements</button>
+  <button class="btn" onclick="copySummary(this)">Copy summary</button>
+  <button class="btn" onclick="window.open('mock_draft_builder.html?div=mens','_blank')">Mock Draft Builder ↗</button>
+</div>
+
+<div class="panel" id="p-order">
+  <h3>Set Draft Order</h3>
+  <div class="order-grid" id="order-grid"></div>
+  <div class="err-msg" id="order-err"></div>
+  <div style="display:flex;gap:7px"><button class="btn active" onclick="confirmOrder()">Confirm</button><button class="btn" onclick="togglePanel('p-order','btn-order')">Cancel</button></div>
+</div>
+<div class="panel" id="p-trade">
+  <h3>Trade Picks</h3>
+  <div class="trade-sides">
+    <div class="trade-side"><h4>Team A gives</h4><div class="trade-picks" id="ta-picks"></div><button class="btn" style="font-size:0.73rem;padding:0.28rem 0.6rem" onclick="addTP('a')">+ Add</button></div>
+    <div style="font-size:1.3rem;color:var(--muted2);text-align:center;padding-top:1.4rem">⇄</div>
+    <div class="trade-side"><h4>Team B gives</h4><div class="trade-picks" id="tb-picks"></div><button class="btn" style="font-size:0.73rem;padding:0.28rem 0.6rem" onclick="addTP('b')">+ Add</button></div>
+  </div>
+  <div class="err-msg" id="trade-err"></div>
+  <div style="display:flex;gap:7px"><button class="btn active" onclick="doTrade()">Confirm trade</button><button class="btn" onclick="togglePanel('p-trade','btn-trade')">Cancel</button></div>
+</div>
+
+<div class="main-area">
+  <div class="team-grid" id="team-grid"></div>
+  <div class="legend">
+    <span><span class="ldot" style="background:var(--accent)"></span>On clock</span>
+    <span><span class="ldot" style="background:var(--success)"></span>Auto-pick (mock)</span>
+    <span><span class="ldot" style="background:var(--rookie)"></span>Rookie round</span>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Rd</th><th>Pk</th><th>Team</th><th>Player</th><th>Position</th></tr></thead>
+    <tbody id="draft-body"></tbody>
+  </table>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const fb = initializeApp({apiKey:"AIzaSyCFdWwwTdPi42oAntUszwWFQL4WFaJS9IQ",databaseURL:"https://ffa-draft-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ffa-draft",appId:"1:849324499106:web:9893151b2298198fe437fb"});
+const db = getDatabase(fb);
+
+const DIV='mens', ROUNDS=10, TEAMS=6, ROOKIE=10;
+const TC=['#f97316','#22d3ee','#a78bfa','#34d399','#fb7185','#fbbf24'];
+
+let picks=[],teams=Array.from({length:TEAMS},(_,i)=>'Team '+(i+1)),baseOrder=Array.from({length:TEAMS},(_,i)=>i);
+let selectedIdx=null,clockState={running:false,startedAt:null,duration:120};
+let clockSettings={autoAdvance:true,useMockDraft:true};
+let clockInterval=null,playerNames=[],playerPositions={},mockDrafts={},mockBranch={},acActive={};
+
+// helpers
+const sha16=async t=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,16)};
+const ord=n=>(['st','nd','rd'][((n+90)%100-10)%10-1]||'th');
+const isRk=r=>r===ROOKIE;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+window.toast=(m,t='success')=>{const e=document.getElementById('toast');e.textContent=m;e.className='toast '+t+' show';setTimeout(()=>e.classList.remove('show'),3000)};
+
+// ── PIN ──────────────────────────────────────────
+window.checkPin=async()=>{
+  const v=document.getElementById('pin-input').value.trim();if(!v)return;
+  const h=await sha16(v);
+  const snap=await get(ref(db,'pins/mens'));
+  const stored=snap.val()||'8feaa233aa6acf48';
+  if(h===stored)document.getElementById('pin-overlay').style.display='none';
+  else{document.getElementById('pin-err').textContent='Incorrect PIN.';document.getElementById('pin-input').value='';}
+};
+document.getElementById('pin-input').addEventListener('keydown',e=>{if(e.key==='Enter')window.checkPin()});
+
+// ── SNAKE ORDER ──────────────────────────────────
+function snakeOrder(){picks=[];let ov=1;for(let r=1;r<=ROUNDS;r++){const ord2=r%2===1?[...baseOrder]:[...baseOrder].reverse();for(let p=0;p<TEAMS;p++){picks.push({overall:ov,round:r,pickInRound:p+1,teamSlot:ord2[p],player:'',position:'',auto:false});ov++;}}}
+window.resetToBase=()=>{const sv=picks.map(p=>({player:p.player,position:p.position,auto:p.auto}));snakeOrder();picks.forEach((p,i)=>{p.player=sv[i]?.player||'';p.position=sv[i]?.position||'';p.auto=sv[i]?.auto||false;});renderTable();buildTrade();};
+
+// ── PANELS ───────────────────────────────────────
+window.togglePanel=(pid,bid)=>{const p=document.getElementById(pid),b=document.getElementById(bid);const open=p.style.display==='block';document.querySelectorAll('.panel').forEach(x=>x.style.display='none');document.querySelectorAll('.toolbar .btn').forEach(x=>x.classList.remove('active'));if(!open){p.style.display='block';b?.classList.add('active');}if(pid==='p-order'&&!open)buildOrderGrid();if(pid==='p-trade'&&!open)buildTrade();};
+
+// ── ORDER ────────────────────────────────────────
+function buildOrderGrid(){const g=document.getElementById('order-grid');g.innerHTML='';for(let i=0;i<TEAMS;i++){const c=document.createElement('div');c.className='order-card';const opts=teams.map((n,j)=>`<option value="${j}" ${baseOrder[i]===j?'selected':''}>${n}</option>`).join('');c.innerHTML=`<label>Pick ${i+1}</label><select id="op-${i}">${opts}</select>`;g.appendChild(c);}document.getElementById('order-err').textContent='';}
+window.confirmOrder=()=>{const no=Array.from({length:TEAMS},(_,i)=>parseInt(document.getElementById('op-'+i).value));if(new Set(no).size!==TEAMS){document.getElementById('order-err').textContent='Each team once.';return;}baseOrder=no;window.resetToBase();togglePanel('p-order','btn-order');syncStream();};
+
+// ── TRADE ────────────────────────────────────────
+const topts=()=>picks.map(p=>`<option value="${p.overall-1}">Pick ${p.overall} (Rd ${p.round} Pk ${p.pickInRound}) — ${teams[p.teamSlot]}</option>`).join('');
+function buildTrade(){['a','b'].forEach((s,si)=>{const c=document.getElementById('t'+s+'-picks');c.innerHTML='';const d=document.createElement('div');d.className='trade-pick-row';d.innerHTML=`<select class="tsel-${s}">${topts()}</select><button class="btn" style="font-size:0.7rem;padding:0.22rem 0.55rem" onclick="this.parentElement.remove()">✕</button>`;d.querySelector('select').selectedIndex=si?Math.min(1,picks.length-1):0;c.appendChild(d);});document.getElementById('trade-err').textContent='';}
+window.addTP=side=>{const c=document.getElementById('t'+side+'-picks');const d=document.createElement('div');d.className='trade-pick-row';d.innerHTML=`<select class="tsel-${side}">${topts()}</select><button class="btn" style="font-size:0.7rem;padding:0.22rem 0.55rem" onclick="this.parentElement.remove()">✕</button>`;c.appendChild(d);};
+window.doTrade=()=>{const ee=document.getElementById('trade-err');const a=[...document.querySelectorAll('.tsel-a')].map(s=>parseInt(s.value));const b=[...document.querySelectorAll('.tsel-b')].map(s=>parseInt(s.value));if(!a.length||!b.length){ee.textContent='Each side needs a pick.';return;}if(a.length!==b.length){ee.textContent='Must trade same number of picks.';return;}if(new Set([...a,...b]).size!==a.length*2){ee.textContent='Duplicate pick in trade.';return;}ee.textContent='';const as=a.map(i=>picks[i].teamSlot),bs=b.map(i=>picks[i].teamSlot);a.forEach((i,x)=>picks[i].teamSlot=bs[x]);b.forEach((i,x)=>picks[i].teamSlot=as[x]);renderTable();buildTrade();syncStream();};
+
+// ── TEAM CARDS ───────────────────────────────────
+function buildTeamCards(){const g=document.getElementById('team-grid');g.innerHTML='';teams.forEach((n,i)=>{const c=document.createElement('div');c.className='team-card';c.id='tc-'+i;c.style.setProperty('--tc',TC[i]);const hasM=mockDrafts[i]&&Object.keys(mockDrafts[i].branches||{}).some(b=>Object.keys(mockDrafts[i].branches[b].picks||{}).length>0);c.innerHTML=`<label>Team ${i+1}</label><input value="${n}" oninput="teams[${i}]=this.value;renderTable();buildTrade();syncStream()">${hasM?'<div class="mock-ready">✓ Mock ready</div>':''}`;g.appendChild(c);});}
+
+// ── TABLE ────────────────────────────────────────
+function renderTable(){const tbody=document.getElementById('draft-body');tbody.innerHTML='';const nxt=picks.findIndex(p=>!p.player);picks.forEach((p,i)=>{const tr=document.createElement('tr');if(p.pickInRound===1)tr.classList.add('round-start');if(isRk(p.round))tr.classList.add('rookie-round');if(selectedIdx===i)tr.classList.add('selected');if(i===nxt&&clockState.running)tr.classList.add('on-clock-row');tr.onclick=()=>selPick(i);const col=TC[p.teamSlot],tn=teams[p.teamSlot]||'Team '+(p.teamSlot+1);const isNxt=i===nxt;const rdl=isRk(p.round)?`<span class="round-lbl rookie-lbl">${p.round}</span>`:`<span class="round-lbl">${p.round}</span>`;const ocb=isNxt&&clockState.running?'<span class="ocbadge">On Clock</span>':'';const rkb=isRk(p.round)?'<span class="rkbadge">U18</span>':'';const ab=p.auto?'<span class="autobadge">Auto</span>':'';tr.innerHTML=`<td>${p.overall}</td><td>${rdl}</td><td>${p.pickInRound}</td><td><span class="tpill" style="background:${col}22;color:${col}">${tn}</span>${ocb}${rkb}</td><td><div class="ac-wrap" onclick="event.stopPropagation()"><input class="editable player-input" data-idx="${i}" value="${p.player}" placeholder="Player name" oninput="picks[${i}].player=this.value;if(selectedIdx===${i})updAnn(${i});acInput(this,${i})" onblur="setTimeout(()=>acClose(${i}),150)" onkeydown="acKey(event,${i});if(event.key==='Enter')onPickEntered(${i})" onclick="selPick(${i})"><div class="ac-dd" id="ac-${i}"></div></div>${ab}</td><td><input class="editable" value="${p.position}" placeholder="Position" oninput="picks[${i}].position=this.value;if(selectedIdx===${i})updAnn(${i});onPickEntered(${i})" onclick="event.stopPropagation();selPick(${i})"></td>`;tbody.appendChild(tr);});}
+
+window.selPick=i=>{selectedIdx=i;document.querySelectorAll('tbody tr').forEach((r,x)=>r.classList.toggle('selected',x===i));updAnn(i);};
+window.onPickEntered=i=>{checkDups();syncStream();const nxt=picks.findIndex(p=>!p.player);if(i<nxt||(i===nxt-1&&picks[i].player))advClock();};
+function updAnn(i){const p=picks[i];const t=teams[p.teamSlot]||'Team '+(p.teamSlot+1);const pl=p.player||'[Player Name]';const pos=p.position||'[Position]';const rk=isRk(p.round)?', <b>U18 Rookie pick</b>':'';document.getElementById('announce-bar').innerHTML=`"With the <b>${p.pickInRound}${ord(p.pickInRound)} pick of Round ${p.round}</b>, <b>${t}</b> selects <b>${pl}</b>, <b>${pos}</b>${rk}."`;}
+
+// ── CLOCK ────────────────────────────────────────
+function nxtIdx(){return picks.findIndex(p=>!p.player);}
+function updClockDisplay(){const i=nxtIdx();if(i<0){document.getElementById('cl-team').textContent='Draft Complete!';document.getElementById('cl-info').textContent='All picks made';document.getElementById('cl-timer').textContent='—';document.getElementById('cl-timer').className='clock-timer done';return;}const p=picks[i];const tn=teams[p.teamSlot]||'Team '+(p.teamSlot+1);const cl=document.getElementById('cl-team');cl.textContent=tn;cl.style.color=TC[p.teamSlot];document.getElementById('cl-info').textContent=`Pick #${p.overall} · Round ${p.round} · Slot ${p.pickInRound}`;document.querySelectorAll('.team-card').forEach(c=>c.classList.remove('on-clock'));const tc=document.getElementById('tc-'+p.teamSlot);if(tc)tc.classList.add('on-clock');}
+
+function startLocalClock(){if(clockInterval)clearInterval(clockInterval);if(!clockState.running||!clockState.duration)return;clockInterval=setInterval(()=>{const el=Math.max(0,(Date.now()-clockState.startedAt)/1000);const rem=Math.max(0,clockState.duration-el);const m=Math.floor(rem/60),s=Math.floor(rem%60);const te=document.getElementById('cl-timer'),be=document.getElementById('cl-bar');te.textContent=m+':'+(s+'').padStart(2,'0');be.style.width=(rem/clockState.duration*100)+'%';te.className='clock-timer';be.className='bar';if(rem<=10){te.classList.add('danger');be.classList.add('danger');}else if(rem<=30){te.classList.add('warn');be.classList.add('warn');}if(rem===0){clearInterval(clockInterval);handleTimeout();}},200);}
+
+async function handleTimeout(){const i=nxtIdx();if(i<0)return;const p=picks[i];const tn=teams[p.teamSlot]||'Team '+(p.teamSlot+1);if(clockSettings.useMockDraft){const ap=getMockPick(p.teamSlot,i);if(ap){document.getElementById('auto-msg').textContent=`Using ${tn}'s mock draft…`;document.getElementById('auto-player').textContent=`${ap.player} (${ap.position||'—'})`;document.getElementById('auto-ov').style.display='flex';await sleep(3000);picks[i].player=ap.player;picks[i].position=ap.position;picks[i].auto=true;document.getElementById('auto-ov').style.display='none';updMockBranch(p.teamSlot,p.overall,ap);renderTable();syncStream();toast('Auto-pick: '+ap.player,'success');restartClock();return;}}if(clockSettings.autoAdvance){const sn=document.getElementById('skip-notice');sn.textContent=`⏭ ${tn} timed out on Pick #${p.overall} — moved behind next pick.`;sn.classList.add('show');setTimeout(()=>sn.classList.remove('show'),6000);if(i+1<picks.length){const[rem]=picks.splice(i,1);picks.splice(Math.min(i+1,picks.length),0,rem);}renderTable();syncStream();restartClock();toast('⏭ '+tn+' timed out','info');}}
+
+function getMockPick(slot,pickIdx){const md=mockDrafts[slot];if(!md?.branches)return null;const bid=mockBranch[slot]||'default';const b=md.branches[bid];if(!b?.picks)return null;const p=picks[pickIdx];const mp=b.picks[p.overall];if(mp?.player&&!picks.some(pp=>pp.player===mp.player))return mp;const mySlots=picks.filter((pp,i)=>pp.teamSlot===slot&&i>=pickIdx).map(pp=>pp.overall);for(const ov of mySlots){const m=b.picks[ov];if(m?.player&&!picks.some(pp=>pp.player===m.player))return m;}return null;}
+function updMockBranch(slot,ov,picked){const md=mockDrafts[slot];if(!md)return;const bid=mockBranch[slot]||'default';const b=md.branches?.[bid];if(!b)return;const cond=b.conditions?.[ov];if(!cond)return;const match=cond.type==='any'||(cond.type==='position'&&picked.position===cond.value)||(cond.type==='player'&&picked.player===cond.value);if(match)mockBranch[slot]=cond.targetBranch;}
+
+function advClock(){if(clockState.running)restartClock();updClockDisplay();renderTable();}
+function restartClock(){clockState.startedAt=Date.now();set(ref(db,'clock/mens/state'),{running:true,startedAt:clockState.startedAt,duration:clockState.duration});startLocalClock();}
+window.adminStart=()=>restartClock();
+window.adminPause=()=>{clockState.running=false;clearInterval(clockInterval);set(ref(db,'clock/mens/state'),{...clockState,running:false});};
+window.adminReset=()=>{clockState.running=false;clearInterval(clockInterval);const d=clockState.duration;document.getElementById('cl-timer').textContent=d?Math.floor(d/60)+':'+(d%60+'').padStart(2,'0'):'—';document.getElementById('cl-bar').style.width='100%';document.getElementById('cl-bar').className='bar';};
+window.adminSkip=()=>handleTimeout();
+
+// ── SYNC ─────────────────────────────────────────
+function syncStream(){const pd={};picks.forEach((p,i)=>{pd[i]={player:p.player,position:p.position,teamSlot:p.teamSlot}});set(ref(db,'stream/mens'),{picks:pd,teams});const dr={};picks.forEach(p=>{if(p.player)dr[p.player]=true});set(ref(db,'drafted/mens'),dr);}
+
+// ── PLAYERS CSV ──────────────────────────────────
+async function loadPlayers(){try{const res=await fetch('Mens 2026 Draft Declarations.csv');if(!res.ok)throw new Error();const text=await res.text();const rows=parseCSV(text).slice(1);playerNames=rows.map(r=>r[0]).filter(Boolean);rows.forEach(r=>{if(r[0]&&r[4])playerPositions[r[0].trim()]=r[4].trim();});}catch{const snap=await get(ref(db,'players'));const d=snap.val()||{};Object.values(d).filter(p=>p.division==='mens').forEach(p=>{if(p.name){playerNames.push(p.name);if(p.position)playerPositions[p.name]=p.position;}});}}
+function parseCSV(text){const rows=[];let i=0,n=text.length;while(i<n){const row=[];while(i<n){let f='';if(text[i]==='"'){i++;while(i<n){if(text[i]==='"'&&i+1<n&&text[i+1]==='"'){f+='"';i+=2;}else if(text[i]==='"'){i++;break;}else f+=text[i++];};}else{while(i<n&&text[i]!==','&&text[i]!=='\n'&&text[i]!=='\r')f+=text[i++];}row.push(f.trim());if(i<n&&text[i]===',')i++;else break;}if(i<n&&text[i]==='\r')i++;if(i<n&&text[i]==='\n')i++;if(row.length)rows.push(row);}return rows;}
+
+// ── AUTOCOMPLETE ─────────────────────────────────
+window.acInput=(inp,idx)=>{const v=inp.value.trim().toLowerCase();const dd=document.getElementById('ac-'+idx);if(!dd||v.length<2){dd?.classList.remove('open');return;}const used=new Set(picks.filter((_,i)=>i!==idx).map(p=>p.player.toLowerCase()));const m=playerNames.filter(n=>n.toLowerCase().startsWith(v)&&!used.has(n.toLowerCase())).slice(0,8);if(!m.length){dd.classList.remove('open');return;}acActive[idx]=-1;dd.innerHTML=m.map(x=>`<div class="ac-opt" data-val="${x}" onmousedown="acSel(${idx},'${x.replace(/'/g,"\\'")}')"> ${x}</div>`).join('');dd.classList.add('open');};
+window.acSel=(idx,name)=>{picks[idx].player=name;const inp=[...document.querySelectorAll('input.player-input')].find(e=>e.dataset.idx==idx);if(inp)inp.value=name;const pos=playerPositions[name]||'';if(pos){picks[idx].position=pos;const r=document.querySelectorAll('tbody tr')[idx];if(r){const pi=r.querySelectorAll('input.editable')[1];if(pi)pi.value=pos;}}acClose(idx);if(selectedIdx===idx)updAnn(idx);checkDups();syncStream();window.onPickEntered(idx);};
+window.acClose=idx=>document.getElementById('ac-'+idx)?.classList.remove('open');
+window.acKey=(e,idx)=>{const dd=document.getElementById('ac-'+idx);if(!dd||!dd.classList.contains('open'))return;const opts=dd.querySelectorAll('.ac-opt');if(!opts.length)return;if(e.key==='ArrowDown'){e.preventDefault();acActive[idx]=Math.min((acActive[idx]??-1)+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('hi',i===acActive[idx]));}else if(e.key==='ArrowUp'){e.preventDefault();acActive[idx]=Math.max((acActive[idx]??0)-1,0);opts.forEach((o,i)=>o.classList.toggle('hi',i===acActive[idx]));}else if(e.key==='Enter'&&acActive[idx]>=0){e.preventDefault();acSel(idx,opts[acActive[idx]].dataset.val);}else if(e.key==='Escape')acClose(idx);};
+function checkDups(){const c={};picks.forEach(p=>{const n=p.player.trim().toLowerCase();if(n)c[n]=(c[n]||0)+1;});document.querySelectorAll('input.player-input').forEach(inp=>{const n=inp.value.trim().toLowerCase();inp.classList.toggle('dup',n&&c[n]>1);});}
+
+// ── CLEAR / COPY ─────────────────────────────────
+window.clearAll=()=>{if(!confirm('Clear all picks?'))return;picks.forEach(p=>{p.player='';p.position='';p.auto=false;});selectedIdx=null;document.getElementById('announce-bar').textContent='Select a pick row to see the announcement.';renderTable();syncStream();};
+window.copyAnnounce=()=>{const l=picks.map(p=>{const t=teams[p.teamSlot]||'Team '+(p.teamSlot+1);const rk=isRk(p.round)?', U18 Rookie pick':'';return`"With the ${p.pickInRound}${ord(p.pickInRound)} pick of Round ${p.round}, ${t} selects ${p.player||'[Player Name]'}, ${p.position||'[Position]'}${rk}."`});navigator.clipboard.writeText(l.join('\n')).then(()=>toast('Copied!'));};
+window.copySummary=btn=>{const l=['FFA DRAFT 2026 - MENS','Order: '+baseOrder.map((s,i)=>(i+1)+'. '+teams[s]).join(', '),''];let cr=0;picks.forEach(p=>{if(p.round!==cr){cr=p.round;l.push(p.round===ROOKIE?'-- Round '+p.round+' (U18) --':'-- Round '+p.round+' --');}l.push('  Pick '+p.pickInRound+': '+(teams[p.teamSlot]||'T'+(p.teamSlot+1))+' | '+(p.player||'-')+' | '+(p.position||'-')+(p.auto?' [AUTO]':''));});navigator.clipboard.writeText(l.join('\n')).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy summary',2000);});};
+
+// ── FIREBASE LISTENERS ───────────────────────────
+function setupListeners(){
+  onValue(ref(db,'clock/settings'),snap=>{const d=snap.val();if(!d)return;if(d.duration!==undefined)clockState.duration=d.duration;clockSettings={autoAdvance:d.autoAdvance??true,useMockDraft:d.useMockDraft??true};});
+  onValue(ref(db,'clock/mens/state'),snap=>{const d=snap.val();if(!d)return;const was=clockState.running;clockState={...clockState,...d};if(d.running&&(!was||d.startedAt!==clockState.startedAt))startLocalClock();else if(!d.running)clearInterval(clockInterval);updClockDisplay();});
+  onValue(ref(db,'clock/mens/skip'),snap=>{const t=snap.val();if(t&&t>Date.now()-5000)handleTimeout();});
+  onValue(ref(db,'stream/mens'),snap=>{const d=snap.val();if(!d)return;if(d.teams){teams=[...d.teams];buildTeamCards();}if(d.picks){snakeOrder();Object.entries(d.picks).forEach(([k,v])=>{const i=parseInt(k);if(picks[i]){picks[i].player=v.player||'';picks[i].position=v.position||'';picks[i].teamSlot=v.teamSlot??picks[i].teamSlot;}});}renderTable();updClockDisplay();});
+  for(let t=0;t<TEAMS;t++){const slot=t;onValue(ref(db,'mockDraft/mens/'+slot),snap=>{const d=snap.val();if(d){mockDrafts[slot]=d;if(!mockBranch[slot])mockBranch[slot]='default';}buildTeamCards();});}
+}
+
+// ── BOOT ─────────────────────────────────────────
+snakeOrder();buildTeamCards();renderTable();updClockDisplay();loadPlayers();setupListeners();buildTrade();
+</script>
+</body>
+</html>

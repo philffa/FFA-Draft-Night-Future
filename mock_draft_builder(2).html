@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mock Draft Builder — FFA 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d14;--surface:#12151f;--surface2:#191d2b;--surface3:#222838;--border:rgba(255,255,255,0.07);--border-md:rgba(255,255,255,0.12);--border-hi:rgba(255,255,255,0.2);--text:#e6e9f2;--muted:#4e5671;--muted2:#7a849e;--accent:#f97316;--accent2:#fb923c;--womens:#a78bfa;--success:#22c55e;--danger:#ef4444;--warn:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+
+/* NAV HEADER */
+.site-header{background:var(--surface);border-bottom:2px solid var(--accent);padding:0.75rem 1.5rem;display:flex;align-items:center;gap:1.25rem;text-decoration:none;transition:background 0.15s;flex-shrink:0}
+.site-header:hover{background:var(--surface2)}
+.site-header-left h1{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--accent);letter-spacing:0.08em;line-height:1}
+.site-header-left p{font-size:0.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px}
+.site-header-back{margin-left:auto;font-size:0.75rem;color:var(--muted2);display:flex;align-items:center;gap:4px}
+.gm-info{margin-left:auto;text-align:right}
+.gm-info .gm-lbl{font-size:0.68rem;color:var(--muted2)}
+.gm-info .gm-val{font-size:0.88rem;font-weight:600}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:300px 1fr;flex:1;overflow:hidden}
+.sidebar{background:var(--surface);border-right:1px solid var(--border-md);display:flex;flex-direction:column;overflow-y:auto}
+.main{padding:1.5rem;overflow-y:auto}
+
+/* Sidebar tabs */
+.sidebar-tabs{display:flex;border-bottom:1px solid var(--border-md)}
+.stab{flex:1;padding:0.68rem;text-align:center;font-size:0.8rem;cursor:pointer;color:var(--muted2);border-bottom:2px solid transparent;transition:all 0.12s}
+.stab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(249,115,22,0.04)}
+.stab-content{display:none;flex:1;flex-direction:column;overflow:hidden}
+.stab-content.active{display:flex}
+
+/* Player list */
+.psearch{padding:0.65rem;border-bottom:1px solid var(--border)}
+.psearch input{width:100%;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.42rem 0.65rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.81rem;outline:none}
+.psearch input:focus{border-color:var(--accent)}
+.plist{flex:1;overflow-y:auto}
+.pitem{padding:0.52rem 0.85rem;cursor:grab;display:flex;align-items:center;gap:0.55rem;border-bottom:1px solid var(--border);transition:background 0.1s;user-select:none;font-size:0.83rem}
+.pitem:hover{background:var(--surface2)}
+.pitem.used{opacity:0.32;pointer-events:none}
+.pitem.dragging{opacity:0.45}
+.pi-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.pi-pos{font-size:0.68rem;color:var(--accent);font-weight:700;min-width:26px;text-align:right}
+.pi-rank{font-size:0.67rem;color:var(--muted);font-family:'DM Mono',monospace;min-width:20px}
+
+/* Branches panel */
+.bpanel{padding:0.75rem;flex:1;overflow-y:auto}
+.bpanel p{font-size:0.78rem;color:var(--muted2);margin-bottom:0.85rem;line-height:1.5}
+.bitem{background:var(--surface2);border:1px solid var(--border-md);border-radius:8px;padding:0.72rem;margin-bottom:0.55rem;cursor:pointer;transition:all 0.12s;border-left:3px solid transparent}
+.bitem:hover{border-color:var(--border-hi)}
+.bitem.active-b{border-left-color:var(--accent)}
+.bitem-name{font-weight:500;font-size:0.84rem;display:flex;align-items:center;gap:0.4rem;justify-content:space-between}
+.bitem-stats{font-size:0.71rem;color:var(--muted2);margin-top:2px}
+.bdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.bactions{display:flex;gap:4px;margin-top:0.5rem}
+
+/* Board */
+.board-hdr{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.board-hdr h2{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:0.05em;flex:1}
+.active-btag{background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);color:var(--accent);padding:3px 11px;border-radius:20px;font-size:0.77rem}
+.summary{background:var(--surface2);border:1px solid var(--border-md);border-radius:9px;padding:0.85rem 1rem;margin-bottom:1.25rem;font-size:0.8rem}
+.sum-title{font-weight:600;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted2);margin-bottom:0.5rem}
+.sum-branch{display:flex;align-items:center;gap:0.5rem;padding:0.28rem 0;border-bottom:1px solid var(--border)}
+.sum-branch:last-child{border-bottom:none}
+.rounds-board{display:flex;flex-direction:column;gap:0.45rem}
+.round-lbl{font-family:'Bebas Neue',sans-serif;font-size:0.82rem;letter-spacing:0.05em;color:var(--muted2);padding:0.2rem 0;border-bottom:1px solid var(--border);margin-top:0.35rem;margin-bottom:0.2rem}
+.pick-slot{background:var(--surface2);border:1px solid var(--border-md);border-radius:7px;padding:0.62rem 0.85rem;min-height:52px;display:flex;flex-direction:column;justify-content:center;transition:all 0.14s;position:relative;cursor:pointer}
+.pick-slot:hover{border-color:var(--border-hi)}
+.pick-slot.drop-target{border-color:var(--accent);background:rgba(249,115,22,0.07);transform:scale(1.01)}
+.pick-slot.filled{background:rgba(249,115,22,0.06);border-color:rgba(249,115,22,0.22)}
+.pick-slot.has-trigger{border-left:3px solid var(--warn)}
+.ps-num{font-size:0.62rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:2px}
+.ps-player{font-size:0.87rem;font-weight:500;line-height:1.2}
+.ps-pos{font-size:0.68rem;color:var(--accent);margin-top:1px}
+.ps-empty{font-size:0.74rem;color:var(--muted)}
+.ps-rm{position:absolute;top:5px;right:7px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;opacity:0;transition:opacity 0.12s;line-height:1;padding:0}
+.pick-slot:hover .ps-rm{opacity:1}
+.ps-rm:hover{color:var(--danger)}
+.ps-trigger{position:absolute;bottom:3px;right:7px;font-size:0.66rem;color:var(--warn)}
+
+/* Modal */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;z-index:300;padding:1rem;backdrop-filter:blur(4px)}
+.modal{background:var(--surface);border:1px solid var(--border-hi);border-radius:12px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-hdr{padding:1.25rem 1.4rem 0;display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.modal-hdr h3{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.06em;color:var(--warn)}
+.modal-close{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:1.1rem;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-body{padding:0 1.4rem 1.4rem}
+.modal-desc{font-size:0.81rem;color:var(--muted2);margin-bottom:1.1rem;line-height:1.6}
+.cb{background:var(--surface2);border:1px solid var(--border-md);border-radius:9px;padding:0.9rem;margin-bottom:0.9rem}
+.crow{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap}
+.crow label{font-size:0.73rem;color:var(--muted2);min-width:75px}
+.csel{background:var(--surface3);border:1px solid var(--border-md);color:var(--text);padding:0.38rem 0.6rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.81rem;outline:none;cursor:pointer}
+.csel:focus{border-color:var(--warn)}
+.btr-row{display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.7rem;background:var(--surface3);border-radius:7px;margin-bottom:0.45rem;border:1px solid var(--border)}
+
+/* Buttons */
+.btn{padding:0.44rem 0.95rem;border-radius:7px;border:1px solid var(--border-hi);background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.81rem;cursor:pointer;transition:all 0.14s;font-weight:500}
+.btn:hover{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn-sm{padding:0.28rem 0.6rem;font-size:0.74rem}
+.btn-warn{border-color:var(--warn);color:var(--warn)}
+.btn-danger{border-color:var(--danger);color:var(--danger)}
+.btn-row{display:flex;gap:0.55rem;flex-wrap:wrap;align-items:center;margin-top:0.85rem}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:0.72rem 1.05rem;font-size:0.82rem;z-index:999;transform:translateY(3rem);opacity:0;transition:all 0.25s;max-width:290px;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.info{border-left:3px solid var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- NAV HEADER (clicking returns to home) -->
+<a class="site-header" href="index.html">
+  <div class="site-header-left">
+    <h1>Mock Draft Builder</h1>
+    <p>FFA Draft 2026 · Conditional Strategy</p>
+  </div>
+  <div class="gm-info" id="gm-info" onclick="event.stopPropagation()">
+    <div class="gm-lbl">GM</div>
+    <div class="gm-val" id="gm-name-display">Loading…</div>
+  </div>
+  <div class="site-header-back">← Home</div>
+</a>
+
+<!-- SAVE BAR -->
+<div style="background:var(--surface2);border-bottom:1px solid var(--border-md);padding:0.55rem 1.5rem;display:flex;gap:0.55rem;align-items:center">
+  <span style="font-size:0.78rem;color:var(--muted2);flex:1" id="save-status">Unsaved changes</span>
+  <button class="btn btn-primary btn-sm" onclick="saveMockDraft()">💾 Save Draft</button>
+  <button class="btn btn-sm" onclick="previewLogic()">👁 Preview Logic</button>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <div class="stab active" onclick="switchSTab(this,'players')">Players</div>
+      <div class="stab" onclick="switchSTab(this,'branches')">Branches</div>
+    </div>
+    <div class="stab-content active" id="stab-players">
+      <div class="psearch"><input id="psearch-inp" placeholder="Search players…" oninput="filterPlayers(this.value)"></div>
+      <div class="plist" id="plist"></div>
+    </div>
+    <div class="stab-content" id="stab-branches">
+      <div class="bpanel">
+        <p>Branches let you plan different strategies based on how earlier picks go. Right-click a filled slot to add a branch trigger condition.</p>
+        <div id="branches-list"></div>
+        <button class="btn btn-sm" style="width:100%" onclick="addBranch()">+ New Branch</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN BOARD -->
+  <div class="main">
+    <div class="board-hdr">
+      <div>
+        <h2>Draft Board</h2>
+        <p style="font-size:0.77rem;color:var(--muted2);margin-top:2px">Drag players onto your pick slots · Right-click a filled slot to set a branch trigger</p>
+      </div>
+      <span class="active-btag" id="active-btag">Default</span>
+    </div>
+    <div class="summary" id="summary-panel">
+      <div class="sum-title">Branch Summary</div>
+      <div id="summary-content">No branches yet — all picks follow default order.</div>
+    </div>
+    <div class="rounds-board" id="rounds-board"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveMockDraft()">💾 Save All</button>
+      <button class="btn btn-danger btn-sm" onclick="clearBoard()">Clear Board</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONDITION MODAL -->
+<div class="modal-ov" id="cond-modal" style="display:none" onclick="if(event.target===this)closeCond()">
+  <div class="modal">
+    <div class="modal-hdr"><h3>⚡ Branch Trigger</h3><button class="modal-close" onclick="closeCond()">✕</button></div>
+    <div class="modal-body">
+      <p class="modal-desc">If this pick meets a condition, future auto-picks switch to a different branch.</p>
+      <div class="cb">
+        <div class="crow">
+          <label>If pick is</label>
+          <select class="csel" id="cond-type" onchange="updateCondUI()">
+            <option value="position">a specific position</option>
+            <option value="player">a specific player</option>
+            <option value="any">anything (always trigger)</option>
+          </select>
+        </div>
+        <div class="crow" id="cond-val-row">
+          <label>Value</label>
+          <select class="csel" id="cond-pos"><option>QB</option><option>WR</option><option>RB</option><option>TE</option><option>CB</option><option>Safety</option><option>LB</option><option>DE</option><option>Athlete</option><option>Two-Way</option></select>
+          <input id="cond-pname" placeholder="Player name" style="display:none;flex:1;background:var(--surface3);border:1px solid var(--border-md);color:var(--text);padding:0.38rem 0.6rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.81rem;outline:none">
+        </div>
+      </div>
+      <p style="font-size:0.77rem;color:var(--muted2);margin-bottom:0.6rem;font-weight:600">Switch to branch:</p>
+      <div id="branch-targets"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveCond()">Set Trigger</button>
+        <button class="btn" onclick="closeCond()">Cancel</button>
+        <button class="btn btn-danger btn-sm" onclick="clearCond()">Remove Trigger</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const fb = initializeApp({apiKey:"AIzaSyCFdWwwTdPi42oAntUszwWFQL4WFaJS9IQ",databaseURL:"https://ffa-draft-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ffa-draft",appId:"1:849324499106:web:9893151b2298198fe437fb"});
+const db = getDatabase(fb);
+
+const params = new URLSearchParams(location.search);
+const gmDiv = params.get('div')||'mens';
+const gmSlot = parseInt(params.get('team')||'0');
+const BC = ['#f97316','#38bdf8','#f472b6','#a3e635','#e879f9','#f87171'];
+
+let allPlayers=[], mySlots=[], activeBranchId='default', condTarget=null, draggedPlayer=null;
+let branches = {default:{id:'default',name:'Default',color:BC[0],picks:{},conditions:{}}};
+
+// helpers
+window.toast=(m,t='success')=>{const e=document.getElementById('toast');e.textContent=m;e.className='toast '+t+' show';setTimeout(()=>e.classList.remove('show'),3000)};
+const bn=id=>branches[id]?.name||id;
+
+async function init(){
+  const cfg = (await get(ref(db,'config/'+gmDiv))).val()||{};
+  const ROUNDS=cfg.draft?.rounds||(gmDiv==='mens'?10:11);
+  const TEAMS=cfg.draft?.teams||6;
+  const order=cfg.draftOrder||Array.from({length:TEAMS},(_,i)=>i);
+  let ov=1; mySlots=[];
+  for(let r=1;r<=ROUNDS;r++){
+    const ord=r%2===1?[...order]:[...order].reverse();
+    for(let p=0;p<TEAMS;p++){if(ord[p]===gmSlot)mySlots.push({overall:ov,round:r,pick:p+1});ov++;}
+  }
+  const teams=((await get(ref(db,'config/'+gmDiv+'/teams'))).val()||[]);
+  const myTeam=Array.isArray(teams)?teams[gmSlot]:Object.values(teams)[gmSlot];
+  document.getElementById('gm-name-display').textContent=(myTeam?.name||'Team '+(gmSlot+1))+(myTeam?.gm?' · '+myTeam.gm:'');
+
+  onValue(ref(db,'players'),snap=>{
+    const d=snap.val()||{};
+    allPlayers=Object.values(d).filter(p=>p.division===gmDiv);
+    renderPlayers(allPlayers);
+  });
+
+  const saved=(await get(ref(db,'mockDraft/'+gmDiv+'/'+gmSlot))).val();
+  if(saved?.branches){branches=saved.branches;if(!branches.default)branches.default={id:'default',name:'Default',color:BC[0],picks:{},conditions:{}};}
+
+  renderBoard(); renderBranches(); renderSummary();
+  document.getElementById('save-status').textContent='Loaded';
+}
+
+window.switchSTab=(el,id)=>{document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.stab-content').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('stab-'+id).classList.add('active');};
+
+function renderPlayers(list){
+  const c=document.getElementById('plist');c.innerHTML='';
+  const usedNames=new Set(Object.values(branches).flatMap(b=>Object.values(b.picks||{}).map(pk=>pk.player)));
+  list.forEach((p,i)=>{
+    const used=usedNames.has(p.name);
+    const div=document.createElement('div');div.className='pitem'+(used?' used':'');div.draggable=!used;div.dataset.name=p.name;div.dataset.pos=p.position||'';
+    div.innerHTML=`<span class="pi-rank">${i+1}</span><span class="pi-name">${p.name}</span><span class="pi-pos">${p.position||'—'}</span>`;
+    div.addEventListener('dragstart',e=>{draggedPlayer={name:p.name,position:p.position||''};div.classList.add('dragging');e.dataTransfer.effectAllowed='copy';});
+    div.addEventListener('dragend',()=>div.classList.remove('dragging'));
+    div.addEventListener('dblclick',()=>{const next=mySlots.find(s=>!branches[activeBranchId].picks?.[s.overall]);if(next)assignPick(next.overall,p);});
+    c.appendChild(div);
+  });
+}
+window.filterPlayers=q=>{const ql=q.toLowerCase();renderPlayers(allPlayers.filter(p=>!ql||(p.name||'').toLowerCase().includes(ql)||(p.position||'').toLowerCase().includes(ql)));};
+
+function renderBoard(){
+  const board=document.getElementById('rounds-board');board.innerHTML='';
+  const branch=branches[activeBranchId];if(!branch)return;
+  let curRound=0;
+  mySlots.forEach(slot=>{
+    if(slot.round!==curRound){curRound=slot.round;const l=document.createElement('div');l.className='round-lbl';l.textContent='Round '+slot.round;board.appendChild(l);}
+    const pick=branch.picks?.[slot.overall];const cond=branch.conditions?.[slot.overall];
+    const cell=document.createElement('div');
+    cell.className='pick-slot'+(pick?' filled':'')+(cond?' has-trigger':'');
+    cell.dataset.overall=slot.overall;
+    cell.innerHTML=`<div class="ps-num">Pick #${slot.overall} · Rd ${slot.round} Pk ${slot.pick}</div>
+      ${pick?`<div class="ps-player">${pick.player}</div><div class="ps-pos">${pick.position||''}</div><button class="ps-rm" onclick="removePick(${slot.overall},event)">✕</button>`:`<div class="ps-empty">Drop or double-click player</div>`}
+      ${cond?`<div class="ps-trigger">⚡→${bn(cond.targetBranch)}</div>`:''}`;
+    cell.addEventListener('dragover',e=>{e.preventDefault();cell.classList.add('drop-target');});
+    cell.addEventListener('dragleave',()=>cell.classList.remove('drop-target'));
+    cell.addEventListener('drop',e=>{e.preventDefault();cell.classList.remove('drop-target');if(draggedPlayer)assignPick(slot.overall,draggedPlayer);});
+    cell.addEventListener('contextmenu',e=>{e.preventDefault();if(pick)openCond(slot.overall);});
+    board.appendChild(cell);
+  });
+}
+
+function assignPick(overall,player){
+  const b=branches[activeBranchId];if(!b.picks)b.picks={};
+  b.picks[overall]={player:player.name,position:player.position||''};
+  draggedPlayer=null;renderBoard();renderPlayers(allPlayers);renderSummary();
+  document.getElementById('save-status').textContent='Unsaved changes';
+  toast('→ '+player.name,'info');
+}
+window.removePick=(ov,e)=>{e.stopPropagation();const b=branches[activeBranchId];if(b.picks)delete b.picks[ov];if(b.conditions)delete b.conditions[ov];renderBoard();renderPlayers(allPlayers);renderSummary();document.getElementById('save-status').textContent='Unsaved changes';};
+
+window.addBranch=()=>{const name=prompt('Branch name (e.g. "QB Round 1"):');if(!name)return;const id='b_'+Date.now();const ci=Object.keys(branches).length%BC.length;branches[id]={id,name,color:BC[ci],picks:{},conditions:{}};renderBranches();renderSummary();toast('Branch "'+name+'" created');};
+
+function renderBranches(){
+  const c=document.getElementById('branches-list');c.innerHTML='';
+  Object.values(branches).forEach(b=>{
+    const div=document.createElement('div');div.className='bitem'+(b.id===activeBranchId?' active-b':'');
+    const pc=Object.keys(b.picks||{}).length;const cc=Object.keys(b.conditions||{}).length;
+    div.innerHTML=`<div class="bitem-name"><span><span class="bdot" style="background:${b.color};display:inline-block;vertical-align:middle;margin-right:5px"></span>${b.name}</span>${b.id!=='default'?`<button class="btn btn-sm btn-danger" onclick="delBranch('${b.id}',event)">✕</button>`:''}</div><div class="bitem-stats">${pc} picks · ${cc} triggers</div><div class="bactions"><button class="btn btn-sm" onclick="switchBranch('${b.id}')">Edit</button>${b.id!=='default'?`<button class="btn btn-sm btn-warn" onclick="renameBranch('${b.id}')">Rename</button>`:''}</div>`;
+    c.appendChild(div);
+  });
+}
+window.switchBranch=id=>{activeBranchId=id;document.getElementById('active-btag').textContent=branches[id]?.name||id;renderBoard();renderBranches();};
+window.delBranch=(id,e)=>{e.stopPropagation();if(!confirm('Delete branch?'))return;delete branches[id];if(activeBranchId===id)activeBranchId='default';renderBranches();renderBoard();renderSummary();};
+window.renameBranch=id=>{const n=prompt('New name:',branches[id]?.name||'');if(n){branches[id].name=n;renderBranches();renderSummary();}};
+
+function renderSummary(){
+  const el=document.getElementById('summary-content');
+  const list=Object.values(branches);
+  if(list.length===1){el.textContent='Default branch · '+Object.keys(branches.default.picks||{}).length+' picks. No conditional branches.';return;}
+  el.innerHTML=list.map(b=>`<div class="sum-branch"><span class="bdot" style="background:${b.color};width:9px;height:9px;border-radius:50%;flex-shrink:0"></span><span style="font-weight:500;font-size:0.82rem">${b.name}</span><span style="color:var(--muted2);font-size:0.75rem;margin-left:0.5rem">${Object.keys(b.picks||{}).length} picks, ${Object.keys(b.conditions||{}).length} triggers</span></div>`).join('');
+}
+
+// Condition modal
+window.openCond=ov=>{condTarget=ov;const b=branches[activeBranchId];const ex=b.conditions?.[ov]||{};document.getElementById('cond-type').value=ex.type||'position';document.getElementById('cond-pos').value=ex.value||'QB';document.getElementById('cond-pname').value=ex.value||'';updateCondUI();const tl=document.getElementById('branch-targets');tl.innerHTML='';Object.values(branches).filter(b=>b.id!==activeBranchId).forEach(b=>{const row=document.createElement('div');row.className='btr-row';row.innerHTML=`<input type="radio" name="btr" value="${b.id}" id="btr-${b.id}" ${ex.targetBranch===b.id?'checked':''} style="accent-color:var(--accent)"><span class="bdot" style="background:${b.color};width:9px;height:9px;border-radius:50%"></span><label for="btr-${b.id}" style="cursor:pointer;font-size:0.84rem;flex:1">${b.name}</label>`;tl.appendChild(row);});if(!tl.children.length)tl.innerHTML='<p style="font-size:0.8rem;color:var(--muted2)">Create another branch first.</p>';document.getElementById('cond-modal').style.display='flex';};
+window.closeCond=()=>{document.getElementById('cond-modal').style.display='none';condTarget=null;};
+window.updateCondUI=()=>{const t=document.getElementById('cond-type').value;document.getElementById('cond-pos').style.display=t==='position'?'block':'none';document.getElementById('cond-pname').style.display=t==='player'?'block':'none';document.getElementById('cond-val-row').style.display=t==='any'?'none':'flex';};
+window.saveCond=()=>{if(!condTarget)return;const type=document.getElementById('cond-type').value;let value='';if(type==='position')value=document.getElementById('cond-pos').value;else if(type==='player')value=document.getElementById('cond-pname').value.trim();const tr=document.querySelector('input[name="btr"]:checked');if(!tr){alert('Select target branch');return;}const b=branches[activeBranchId];if(!b.conditions)b.conditions={};b.conditions[condTarget]={type,value,targetBranch:tr.value};closeCond();renderBoard();renderSummary();document.getElementById('save-status').textContent='Unsaved changes';toast('Trigger set on pick #'+condTarget,'info');};
+window.clearCond=()=>{if(!condTarget)return;const b=branches[activeBranchId];if(b.conditions)delete b.conditions[condTarget];closeCond();renderBoard();renderSummary();};
+
+window.saveMockDraft=()=>{set(ref(db,'mockDraft/'+gmDiv+'/'+gmSlot),{branches,activeBranchId,updatedAt:Date.now()}).then(()=>{document.getElementById('save-status').textContent='Saved ✓';toast('Saved!');}).catch(()=>toast('Save failed','error'));};
+window.clearBoard=()=>{if(!confirm('Clear all picks on current branch?'))return;const b=branches[activeBranchId];b.picks={};b.conditions={};renderBoard();renderPlayers(allPlayers);renderSummary();document.getElementById('save-status').textContent='Unsaved changes';};
+window.previewLogic=()=>{const lines=["Auto-select Preview","—".repeat(38)];let cur='default';mySlots.forEach(s=>{const b=branches[cur];const pk=b?.picks?.[s.overall];const cond=b?.conditions?.[s.overall];lines.push(`Pick #${s.overall} (Rd ${s.round}): ${pk?pk.player+' ('+pk.position+')':'[no pick queued]'}`);if(cond&&pk){lines.push(`  ⚡ IF ${cond.type==='any'?'always':cond.type+'='+cond.value} → switch to "${bn(cond.targetBranch)}"`);cur=cond.targetBranch;}});alert(lines.join('\n'));};
+
+init().catch(console.error);
+</script>
+</body>
+</html>

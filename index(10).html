@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FFA Draft Night 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--surface:#161920;--surface2:#1e2230;--border:rgba(255,255,255,0.08);--border-strong:rgba(255,255,255,0.18);--text:#f0f2f7;--muted:#6b7280;--mens:#f97316;--womens:#a78bfa;--admin:#f59e0b;--player:#38bdf8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:2.5rem 2rem 2rem;text-align:center}
+.header h1{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;letter-spacing:0.1em;background:linear-gradient(90deg,var(--mens),var(--womens));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.header p{font-size:0.82rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:8px}
+.main{padding:2rem;max-width:960px;margin:0 auto}
+.division{margin-bottom:2.5rem}
+.division-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:0.08em;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:2px solid var(--division-color);color:var(--division-color)}
+.links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.link-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;text-decoration:none;color:var(--text);display:flex;flex-direction:column;gap:4px;transition:border-color 0.15s,background 0.15s;border-left:3px solid var(--division-color)}
+.link-card:hover{background:var(--surface2);border-color:var(--division-color)}
+.card-title{font-size:0.88rem;font-weight:500;display:flex;align-items:center;gap:6px}
+.card-desc{font-size:0.73rem;color:var(--muted)}
+.new-badge{font-size:0.6rem;font-weight:700;background:var(--division-color);color:#000;padding:1px 6px;border-radius:20px;margin-left:auto;letter-spacing:0.05em;align-self:flex-start}
+.footer{text-align:center;padding:2rem;font-size:0.75rem;color:var(--muted);border-top:1px solid var(--border);margin-top:1rem}
+</style>
+</head>
+<body>
+
+<a class="header" href="index.html" style="text-decoration:none;display:block;cursor:pointer">
+  <h1>FFA Draft Night 2026</h1>
+  <p>Flag Football Australia &nbsp;·&nbsp; Draft Hub</p>
+</a>
+
+<div class="main">
+
+  <div class="division" style="--division-color:var(--mens)">
+    <div class="division-title">🏈 Men's Division</div>
+    <div class="links-grid">
+      <a class="link-card" href="mens_draft_board_v3.html">
+        <span class="card-title">📋 Draft Board</span>
+        <span class="card-desc">Live pick entry · Clock · PIN protected</span>
+      </a>
+      <a class="link-card" href="mens_stream_board.html">
+        <span class="card-title">📺 Stream Board</span>
+        <span class="card-desc">Live view · For broadcast</span>
+      </a>
+      <a class="link-card" href="mock_draft_builder.html?div=mens">
+        <span class="card-title">🧠 Mock Draft Builder <span class="new-badge">NEW</span></span>
+        <span class="card-desc">Conditional strategy for GMs</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="division" style="--division-color:var(--womens)">
+    <div class="division-title">⚡ Women's Division</div>
+    <div class="links-grid">
+      <a class="link-card" href="womens_draft_board.html">
+        <span class="card-title">📋 Draft Board</span>
+        <span class="card-desc">Live pick entry · Clock · PIN protected</span>
+      </a>
+      <a class="link-card" href="womens_stream_board.html">
+        <span class="card-title">📺 Stream Board</span>
+        <span class="card-desc">Live view · For broadcast</span>
+      </a>
+      <a class="link-card" href="mock_draft_builder.html?div=womens">
+        <span class="card-title">🧠 Mock Draft Builder <span class="new-badge">NEW</span></span>
+        <span class="card-desc">Conditional strategy for GMs</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="division" style="--division-color:var(--player)">
+    <div class="division-title">👤 Players</div>
+    <div class="links-grid">
+      <a class="link-card" href="player_portal.html">
+        <span class="card-title">👤 Player Portal <span class="new-badge">NEW</span></span>
+        <span class="card-desc">Edit profile, film links &amp; bio</span>
+      </a>
+      <a class="link-card" href="player_mock_draft.html">
+        <span class="card-title">📝 My Mock Draft <span class="new-badge">NEW</span></span>
+        <span class="card-desc">Build &amp; export your own pick order</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="division" style="--division-color:var(--admin)">
+    <div class="division-title">⚙ Admin</div>
+    <div class="links-grid">
+      <a class="link-card" href="admin.html">
+        <span class="card-title">🔧 Admin Panel</span>
+        <span class="card-desc">Clock, players, rankings, PINs · Admin only</span>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">FFA Draft 2026 &nbsp;·&nbsp; Firebase Realtime Database &nbsp;·&nbsp; All data syncs live</div>
+
+</body>
+</html>
