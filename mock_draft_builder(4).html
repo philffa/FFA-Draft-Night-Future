@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mock Draft Builder — FFA 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#0b0d14;--surface:#12151f;--surface2:#191d2b;--surface3:#222838;--border:rgba(255,255,255,0.07);--border-md:rgba(255,255,255,0.13);--border-hi:rgba(255,255,255,0.22);--text:#e6e9f2;--muted:#4a5268;--muted2:#7a849e;--accent:#f97316;--accent2:#fb923c;--success:#22c55e;--danger:#ef4444;--warn:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+
+/* NAV */
+.site-header{background:var(--surface);border-bottom:2px solid var(--accent);padding:0.75rem 1.5rem;display:flex;align-items:center;gap:1rem;text-decoration:none;transition:background 0.15s;flex-shrink:0}
+.site-header:hover{background:var(--surface2)}
+.site-header h1{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;color:var(--accent);letter-spacing:0.08em;line-height:1}
+.site-header p{font-size:0.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:0.75rem}
+.gm-badge{background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:0.78rem;font-weight:600}
+.back-link{font-size:0.73rem;color:var(--muted2);transition:color 0.15s}
+.site-header:hover .back-link{color:var(--accent)}
+
+/* SAVE BAR */
+.save-bar{background:var(--surface2);border-bottom:1px solid var(--border-md);padding:0.55rem 1.5rem;display:flex;gap:0.55rem;align-items:center;flex-shrink:0}
+.save-status{font-size:0.78rem;color:var(--muted2);flex:1}
+.save-status.saved{color:var(--success)}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden;gap:0}
+
+/* LEFT: player pool */
+.player-panel{width:260px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border-md);display:flex;flex-direction:column;overflow:hidden}
+.panel-title{padding:0.75rem 1rem;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted2);font-weight:600;border-bottom:1px solid var(--border-md);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.panel-search{padding:0.55rem 0.85rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.panel-search input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.4rem 0.65rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.81rem;outline:none}
+.panel-search input:focus{border-color:var(--accent)}
+.player-list{flex:1;overflow-y:auto}
+.player-item{padding:0.5rem 1rem;cursor:grab;display:flex;align-items:center;gap:0.5rem;border-bottom:1px solid var(--border);transition:background 0.1s;user-select:none}
+.player-item:hover{background:var(--surface2)}
+.player-item.used{opacity:0.3;pointer-events:none}
+.player-item.dragging{opacity:0.4;background:rgba(249,115,22,0.08)}
+.pi-name{flex:1;font-size:0.83rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pi-pos{font-size:0.68rem;color:var(--accent);font-weight:700;min-width:30px;text-align:right}
+.pi-rank{font-size:0.66rem;color:var(--muted);font-family:'DM Mono',monospace;min-width:18px}
+.drag-hint{padding:0.75rem 1rem;font-size:0.74rem;color:var(--muted2);line-height:1.5;border-bottom:1px solid var(--border);background:rgba(249,115,22,0.03)}
+
+/* MAIN: draft board */
+.board-area{flex:1;overflow-y:auto;padding:1.5rem}
+.board-header{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.board-header-text h2{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:0.05em}
+.board-header-text p{font-size:0.78rem;color:var(--muted2);margin-top:3px;line-height:1.5}
+
+/* BRANCH LEGEND */
+.branch-legend{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1.25rem}
+.branch-pill{display:flex;align-items:center;gap:0.5rem;background:var(--surface);border:1px solid var(--border-md);border-radius:20px;padding:4px 10px 4px 6px;font-size:0.78rem;cursor:pointer;transition:all 0.12s;user-select:none}
+.branch-pill:hover{border-color:var(--border-hi)}
+.branch-pill.active-b{border-color:var(--bc);background:rgba(var(--bc-rgb),0.08)}
+.branch-pill .bdot{width:10px;height:10px;border-radius:50%;background:var(--bc);flex-shrink:0}
+.branch-pill .bname{font-weight:500;color:var(--text)}
+.branch-pill .bcount{font-size:0.7rem;color:var(--muted2)}
+.branch-pill .bdel{color:var(--muted);font-size:0.85rem;line-height:1;padding-left:4px;transition:color 0.12s}
+.branch-pill .bdel:hover{color:var(--danger)}
+.add-branch-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1px dashed var(--border-hi);border-radius:20px;padding:4px 12px;font-size:0.78rem;color:var(--muted2);cursor:pointer;transition:all 0.12s;font-family:'DM Sans',sans-serif}
+.add-branch-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* PICK ROWS */
+.pick-list{display:flex;flex-direction:column;gap:0}
+.round-divider{font-family:'Bebas Neue',sans-serif;font-size:0.82rem;letter-spacing:0.07em;color:var(--muted2);padding:0.5rem 0 0.3rem;border-bottom:1px solid var(--border);margin-bottom:0.35rem;margin-top:0.6rem;display:flex;align-items:center;gap:0.5rem}
+.round-divider:first-child{margin-top:0}
+.round-divider .rd-num{color:var(--accent)}
+
+/* Pick card */
+.pick-card{display:flex;align-items:stretch;gap:0;margin-bottom:4px;border-radius:9px;overflow:hidden;border:1px solid var(--border-md);transition:border-color 0.15s}
+.pick-card:hover{border-color:var(--border-hi)}
+.pick-card.drop-target{border-color:var(--accent);background:rgba(249,115,22,0.05)}
+
+/* Branch indicator bar on left */
+.pick-branch-bar{width:4px;flex-shrink:0;background:var(--bc,var(--muted))}
+
+/* Pick number */
+.pick-num-col{width:52px;flex-shrink:0;background:var(--surface2);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0.6rem 0.3rem;border-right:1px solid var(--border)}
+.pick-overall{font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--accent);font-weight:500}
+.pick-rd{font-size:0.6rem;color:var(--muted2)}
+
+/* Pick body */
+.pick-body{flex:1;padding:0.55rem 0.85rem;background:var(--surface);display:flex;align-items:center;gap:0.75rem;min-width:0}
+.pick-body.empty-slot{cursor:pointer}
+.pick-body.empty-slot:hover .drop-text{color:var(--muted2)}
+.drop-text{font-size:0.78rem;color:var(--muted);transition:color 0.15s}
+.pick-player{font-size:0.9rem;font-weight:600;color:var(--text)}
+.pick-pos{font-size:0.72rem;color:var(--accent);font-weight:700;margin-left:2px}
+.pick-auto{font-size:0.65rem;color:var(--success);background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);padding:1px 6px;border-radius:20px;margin-left:4px}
+
+/* Pick actions */
+.pick-actions{display:flex;align-items:center;gap:0;flex-shrink:0}
+.pick-btn{background:none;border:none;cursor:pointer;padding:0.6rem 0.65rem;color:var(--muted);font-size:0.85rem;transition:color 0.15s;line-height:1}
+.pick-btn:hover{color:var(--text)}
+.pick-btn.rm:hover{color:var(--danger)}
+
+/* CONDITION INLINE PANEL */
+.condition-panel{background:var(--surface2);border:1px solid var(--border-md);border-radius:0 0 9px 9px;margin-top:-4px;margin-bottom:4px;padding:1rem 1.25rem;display:none}
+.condition-panel.open{display:block}
+.cp-title{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--warn);margin-bottom:0.85rem;display:flex;align-items:center;gap:0.5rem}
+.cp-title svg{flex-shrink:0}
+.cp-intro{font-size:0.82rem;color:var(--muted2);margin-bottom:1rem;line-height:1.55}
+.cp-row{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.75rem;flex-wrap:wrap}
+.cp-label{font-size:0.78rem;color:var(--muted2);min-width:55px}
+.cp-select{background:var(--surface3);border:1px solid var(--border-md);color:var(--text);padding:0.38rem 0.65rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;cursor:pointer}
+.cp-select:focus{border-color:var(--warn)}
+.cp-input{background:var(--surface3);border:1px solid var(--border-md);color:var(--text);padding:0.38rem 0.65rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;min-width:140px}
+.cp-input:focus{border-color:var(--warn)}
+.cp-branch-grid{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.85rem}
+.cp-branch-opt{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.85rem;border-radius:7px;border:1px solid var(--border-md);cursor:pointer;font-size:0.82rem;transition:all 0.12s;background:var(--surface3)}
+.cp-branch-opt:hover{border-color:var(--border-hi)}
+.cp-branch-opt.selected{border-color:var(--bc);background:rgba(var(--bc-rgb),0.1);font-weight:600}
+.cp-branch-opt .bdot{width:10px;height:10px;border-radius:50%;background:var(--bc);flex-shrink:0}
+.cp-or-new{font-size:0.78rem;color:var(--muted2);display:flex;align-items:center;gap:0.5rem;margin-bottom:0.85rem}
+.cp-new-branch-inp{background:var(--surface3);border:1px solid var(--border-md);color:var(--text);padding:0.35rem 0.6rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;width:160px}
+.cp-new-branch-inp:focus{border-color:var(--accent)}
+.cp-actions{display:flex;gap:0.55rem;align-items:center}
+.cp-saved{font-size:0.75rem;color:var(--success);opacity:0;transition:opacity 0.3s}
+.cp-saved.show{opacity:1}
+
+/* Condition badge on pick card */
+.condition-badge{display:inline-flex;align-items:center;gap:4px;font-size:0.68rem;color:var(--warn);background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);padding:2px 7px;border-radius:20px;flex-shrink:0}
+
+/* Buttons */
+.btn{padding:0.42rem 0.9rem;border-radius:7px;border:1px solid var(--border-hi);background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.81rem;cursor:pointer;transition:all 0.14s;font-weight:500}
+.btn:hover{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn-sm{padding:0.28rem 0.65rem;font-size:0.75rem}
+.btn-warn{border-color:var(--warn);color:var(--warn)}
+.btn-warn:hover{background:rgba(245,158,11,0.1)}
+.btn-danger{border-color:var(--danger);color:var(--danger)}
+.btn-danger:hover{background:rgba(239,68,68,0.1)}
+.btn-row{display:flex;gap:0.55rem;flex-wrap:wrap;align-items:center}
+
+/* Empty state */
+.empty-board{text-align:center;padding:4rem 2rem;color:var(--muted2)}
+.empty-board h3{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.06em;color:var(--muted2);margin-bottom:0.5rem}
+.empty-board p{font-size:0.83rem;line-height:1.6}
+
+/* How it works explainer */
+.how-it-works{background:var(--surface);border:1px solid var(--border-md);border-radius:10px;padding:1.25rem;margin-bottom:1.5rem}
+.hiw-title{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted2);margin-bottom:0.75rem}
+.hiw-steps{display:flex;gap:1.25rem;flex-wrap:wrap}
+.hiw-step{display:flex;align-items:flex-start;gap:0.6rem;flex:1;min-width:180px}
+.hiw-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#000;font-size:0.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.hiw-text{font-size:0.79rem;color:var(--muted2);line-height:1.5}
+.hiw-text strong{color:var(--text)}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:0.72rem 1.05rem;font-size:0.82rem;z-index:999;transform:translateY(3rem);opacity:0;transition:all 0.25s;max-width:290px;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.info{border-left:3px solid var(--accent)}
+</style>
+</head>
+<body>
+
+<a class="site-header" href="index.html">
+  <div><h1>Mock Draft Builder</h1><p>FFA Draft 2026 · Conditional Strategy</p></div>
+  <div class="header-right">
+    <div class="gm-badge" id="gm-badge">Loading…</div>
+    <span class="back-link">← Home</span>
+  </div>
+</a>
+
+<div class="save-bar">
+  <span class="save-status" id="save-status">Loading…</span>
+  <button class="btn btn-sm" id="btn-preview">👁 Preview auto-select</button>
+  <button class="btn btn-sm btn-danger" id="btn-clear">Clear board</button>
+  <button class="btn btn-primary btn-sm" id="btn-save">💾 Save</button>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: Player pool -->
+  <div class="player-panel">
+    <div class="panel-title">
+      <span>Available Players</span>
+      <span id="avail-count" style="font-size:0.7rem;font-weight:400"></span>
+    </div>
+    <div class="drag-hint">
+      Drag a player onto a pick slot, or <strong>double-click</strong> to fill the next empty slot.
+    </div>
+    <div class="panel-search">
+      <input id="player-search" placeholder="Filter players…">
+    </div>
+    <div class="player-list" id="player-list"></div>
+  </div>
+
+  <!-- RIGHT: Board -->
+  <div class="board-area">
+
+    <div class="how-it-works">
+      <div class="hiw-title">How branching works</div>
+      <div class="hiw-steps">
+        <div class="hiw-step"><div class="hiw-num">1</div><div class="hiw-text"><strong>Fill your picks</strong> by dragging players from the left onto your pick slots.</div></div>
+        <div class="hiw-step"><div class="hiw-num">2</div><div class="hiw-text"><strong>Click ⚡ on any filled pick</strong> to add a "what if" branch — e.g. "if I take a QB here, follow Plan B instead."</div></div>
+        <div class="hiw-step"><div class="hiw-num">3</div><div class="hiw-text"><strong>Create branches</strong> (Plan B, Plan C…) and fill each with a different set of players for that scenario.</div></div>
+        <div class="hiw-step"><div class="hiw-num">4</div><div class="hiw-text"><strong>On draft night</strong>, if you time out, the system auto-picks your next queued player from whichever branch is active.</div></div>
+      </div>
+    </div>
+
+    <div class="board-header">
+      <div class="board-header-text">
+        <h2>Your Picks — <span id="board-title">Default Plan</span></h2>
+        <p>Showing picks for <span id="viewing-branch-name" style="color:var(--accent);font-weight:600">Default Plan</span>. Click a branch pill above to switch views.</p>
+      </div>
+    </div>
+
+    <!-- Branch pills -->
+    <div class="branch-legend" id="branch-legend"></div>
+
+    <!-- Pick list -->
+    <div class="pick-list" id="pick-list"></div>
+
+    <div class="btn-row" style="margin-top:1.5rem">
+      <button class="btn btn-primary" id="btn-save2">💾 Save Draft</button>
+      <button class="btn btn-sm" id="btn-preview2">👁 Preview auto-select logic</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Firebase ───────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyCFdWwwTdPi42oAntUszwWFQL4WFaJS9IQ",
+  databaseURL:"https://ffa-draft-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"ffa-draft",
+  appId:"1:849324499106:web:9893151b2298198fe437fb"
+});
+var db = firebase.database();
+
+// ── Params ─────────────────────────────────────────────────────
+var params = new URLSearchParams(location.search);
+var gmDiv  = params.get('div')  || 'mens';
+var gmSlot = parseInt(params.get('team') || '0');
+
+// ── Colours ────────────────────────────────────────────────────
+var BC     = ['#f97316','#38bdf8','#f472b6','#a3e635','#e879f9','#fb7185','#fbbf24'];
+var BC_RGB = ['249,115,22','56,189,248','244,114,182','163,230,53','232,121,249','251,113,133','251,191,36'];
+
+// ── State ──────────────────────────────────────────────────────
+// branches: { id: { id, name, color, colorRgb, picks: {overall: {player,position}}, conditions: {overall: {type,value,targetBranch}} } }
+var branches = { default: { id:'default', name:'Default Plan', color:BC[0], colorRgb:BC_RGB[0], picks:{}, conditions:{} } };
+var activeBranchId = 'default';
+var mySlots = [];   // [{overall, round, pick}]
+var allPlayers = [];
+var draftedPlayers = {};
+var openConditionSlot = null; // which overall pick has the condition panel open
+var draggedPlayer = null;
+
+// ── Helpers ────────────────────────────────────────────────────
+function g(id){ return document.getElementById(id); }
+function toast(m,t){ var el=g('toast'); el.textContent=m; el.className='toast '+(t||'success')+' show'; setTimeout(function(){el.classList.remove('show')},3000); }
+function setBranchCSS(el, b){ el.style.setProperty('--bc', b.color); el.style.setProperty('--bc-rgb', b.colorRgb); }
+function branchFor(overall){ 
+  // Walk from default branch, applying conditions to find which branch is active at this pick
+  var cur = 'default';
+  for(var i=0;i<mySlots.length;i++){
+    var s=mySlots[i];
+    if(s.overall===overall) return cur;
+    var b=branches[cur]; if(!b) return cur;
+    var pick=b.picks[s.overall]; if(!pick) continue;
+    var cond=b.conditions[s.overall]; if(!cond) continue;
+    var match = cond.type==='any' || (cond.type==='position'&&pick.position===cond.value) || (cond.type==='player'&&pick.player===cond.value);
+    if(match) cur=cond.targetBranch;
+  }
+  return cur;
+}
+function getActivePick(overall){
+  var bid = branchFor(overall);
+  var b = branches[bid]; if(!b) return null;
+  return b.picks[overall] || null;
+}
+function setActivePick(overall, player, position){
+  var bid = branchFor(overall);
+  var b = branches[bid]; if(!b) return;
+  if(!b.picks) b.picks={};
+  b.picks[overall] = {player:player, position:position||''};
+}
+function clearActivePick(overall){
+  var bid = branchFor(overall);
+  var b = branches[bid]; if(!b) return;
+  if(b.picks) delete b.picks[overall];
+  if(b.conditions) delete b.conditions[overall];
+  if(openConditionSlot===overall) closeConditionPanel();
+}
+function getCondition(overall){
+  var bid = branchFor(overall);
+  var b = branches[bid]; if(!b) return null;
+  return b.conditions && b.conditions[overall] || null;
+}
+function setCondition(overall, type, value, targetBranch){
+  var bid = branchFor(overall);
+  var b = branches[bid]; if(!b) return;
+  if(!b.conditions) b.conditions={};
+  b.conditions[overall] = {type:type, value:value, targetBranch:targetBranch};
+}
+function clearCondition(overall){
+  var bid = branchFor(overall);
+  var b = branches[bid]; if(!b) return;
+  if(b.conditions) delete b.conditions[overall];
+}
+function isUsed(name){
+  return Object.values(branches).some(function(b){
+    return Object.values(b.picks||{}).some(function(pk){return pk.player===name});
+  });
+}
+
+// ── Init ───────────────────────────────────────────────────────
+(function init(){
+  // Load config to build my pick slots
+  db.ref('config/'+gmDiv).once('value').then(function(snap){
+    var cfg = snap.val()||{};
+    var ROUNDS = cfg.draft&&cfg.draft.rounds ? cfg.draft.rounds : (gmDiv==='mens'?10:11);
+    var TEAMS  = cfg.draft&&cfg.draft.teams  ? cfg.draft.teams  : 6;
+    var order  = cfg.draftOrder || Array.from({length:TEAMS},function(_,i){return i});
+
+    mySlots = [];
+    var ov=1;
+    for(var r=1;r<=ROUNDS;r++){
+      var ord = r%2===1 ? order.slice() : order.slice().reverse();
+      for(var p=0;p<TEAMS;p++){
+        if(ord[p]===gmSlot) mySlots.push({overall:ov, round:r, pick:p+1});
+        ov++;
+      }
+    }
+
+    // Set GM badge
+    db.ref('config/'+gmDiv+'/teams').once('value').then(function(ts){
+      var td = ts.val()||[];
+      var arr = Array.isArray(td)?td:Object.values(td);
+      var myTeam = arr[gmSlot]||{};
+      g('gm-badge').textContent = (myTeam.name||('Team '+(gmSlot+1))) + (myTeam.gm?' · '+myTeam.gm:'');
+    });
+
+    // Load players
+    db.ref('players').on('value', function(snap){
+      var d = snap.val()||{};
+      allPlayers = Object.values(d).filter(function(p){return p.division===gmDiv})
+        .sort(function(a,b){return (a.name||'').localeCompare(b.name||'')});
+      renderPlayerList();
+    });
+
+    // Track drafted
+    db.ref('drafted/'+gmDiv).on('value', function(snap){
+      draftedPlayers = snap.val()||{};
+      renderPlayerList();
+    });
+
+    // Load saved mock draft
+    db.ref('mockDraft/'+gmDiv+'/'+gmSlot).once('value').then(function(snap){
+      var saved = snap.val();
+      if(saved && saved.branches){
+        branches = saved.branches;
+        if(!branches.default) branches.default={id:'default',name:'Default Plan',color:BC[0],colorRgb:BC_RGB[0],picks:{},conditions:{}};
+        // Ensure all branches have colorRgb
+        Object.values(branches).forEach(function(b,i){
+          if(!b.colorRgb) b.colorRgb = BC_RGB[Object.keys(branches).indexOf(b.id)%BC_RGB.length];
+        });
+      }
+      g('save-status').textContent = 'Loaded — '+countPicks()+' picks saved';
+      g('save-status').classList.add('saved');
+      renderAll();
+    });
+  });
+})();
+
+function countPicks(){
+  return mySlots.filter(function(s){ return getActivePick(s.overall); }).length;
+}
+
+// ── Render all ─────────────────────────────────────────────────
+function renderAll(){
+  renderBranchLegend();
+  renderBoard();
+  renderPlayerList();
+}
+
+// ── Branch legend ──────────────────────────────────────────────
+function renderBranchLegend(){
+  var c = g('branch-legend'); c.innerHTML='';
+  Object.values(branches).forEach(function(b){
+    var pc = Object.keys(b.picks||{}).length;
+    var pill = document.createElement('div');
+    pill.className='branch-pill'+(b.id===activeBranchId?' active-b':'');
+    setBranchCSS(pill, b);
+    pill.innerHTML='<div class="bdot"></div><span class="bname">'+b.name+'</span><span class="bcount">('+pc+')</span>'
+      +(b.id!=='default'?'<span class="bdel" data-del="'+b.id+'" title="Delete branch">✕</span>':'');
+    pill.addEventListener('click', function(e){
+      if(e.target.dataset.del){ deleteBranch(e.target.dataset.del); return; }
+      activeBranchId=b.id;
+      g('board-title').textContent=b.name;
+      g('viewing-branch-name').textContent=b.name;
+      closeConditionPanel();
+      renderAll();
+    });
+    c.appendChild(pill);
+  });
+  var addBtn = document.createElement('button');
+  addBtn.className='add-branch-btn';
+  addBtn.textContent='+ New branch';
+  addBtn.addEventListener('click', function(){
+    var name = prompt('Name this branch (e.g. "Plan B — WR first", "QB in Round 1"):');
+    if(!name) return;
+    var idx = Object.keys(branches).length;
+    var id  = 'b_'+Date.now();
+    branches[id] = {id:id, name:name, color:BC[idx%BC.length], colorRgb:BC_RGB[idx%BC_RGB.length], picks:{}, conditions:{}};
+    activeBranchId=id;
+    g('board-title').textContent=name;
+    g('viewing-branch-name').textContent=name;
+    renderAll();
+    markUnsaved();
+    toast('Branch "'+name+'" created — fill it with players','info');
+  });
+  c.appendChild(addBtn);
+}
+
+function deleteBranch(id){
+  if(!confirm('Delete branch "'+branches[id].name+'"? Any picks in it will be lost.')) return;
+  // Remove conditions that point to this branch
+  Object.values(branches).forEach(function(b){
+    Object.keys(b.conditions||{}).forEach(function(ov){
+      if(b.conditions[ov].targetBranch===id) delete b.conditions[ov];
+    });
+  });
+  delete branches[id];
+  if(activeBranchId===id) activeBranchId='default';
+  g('board-title').textContent=branches[activeBranchId].name;
+  g('viewing-branch-name').textContent=branches[activeBranchId].name;
+  closeConditionPanel();
+  renderAll();
+  markUnsaved();
+}
+
+// ── Board ──────────────────────────────────────────────────────
+function renderBoard(){
+  var c=g('pick-list'); c.innerHTML='';
+  if(!mySlots.length){
+    c.innerHTML='<div class="empty-board"><h3>No picks found</h3><p>Could not load your pick slots. Check the URL params (div, team).</p></div>';
+    return;
+  }
+  var curRound=0;
+  mySlots.forEach(function(slot){
+    if(slot.round!==curRound){
+      curRound=slot.round;
+      var div=document.createElement('div');
+      div.className='round-divider';
+      div.innerHTML='<span class="rd-num">Round '+slot.round+'</span><span>·</span><span style="color:var(--muted)">Your pick '+(mySlots.filter(function(s){return s.round===slot.round}).map(function(s){return s.pick}).join(', '))+'</span>';
+      c.appendChild(div);
+    }
+    c.appendChild(buildPickCard(slot));
+    // Condition panel placeholder (inserted after card if open)
+    var cp=buildConditionPanel(slot);
+    c.appendChild(cp);
+  });
+}
+
+function buildPickCard(slot){
+  var overall=slot.overall;
+  var pick = getActivePick(overall);
+  var cond = getCondition(overall);
+  var effectiveBid = branchFor(overall);
+  var b = branches[effectiveBid]||branches.default;
+
+  var card=document.createElement('div');
+  card.className='pick-card'+(openConditionSlot===overall?' open-card':'');
+  card.id='pcard-'+overall;
+
+  // Drag over
+  card.addEventListener('dragover',function(e){e.preventDefault();card.classList.add('drop-target')});
+  card.addEventListener('dragleave',function(){card.classList.remove('drop-target')});
+  card.addEventListener('drop',function(e){
+    e.preventDefault();card.classList.remove('drop-target');
+    if(draggedPlayer){
+      setActivePick(overall, draggedPlayer.name, draggedPlayer.position);
+      draggedPlayer=null; markUnsaved(); renderAll();
+    }
+  });
+
+  // Branch colour bar
+  var bar=document.createElement('div');
+  bar.className='pick-branch-bar';
+  bar.style.background=b.color;
+  bar.title='Branch: '+b.name;
+
+  // Pick number
+  var numCol=document.createElement('div');
+  numCol.className='pick-num-col';
+  numCol.innerHTML='<div class="pick-overall">#'+overall+'</div><div class="pick-rd">Rd'+slot.round+'/Pk'+slot.pick+'</div>';
+
+  // Pick body
+  var body=document.createElement('div');
+  body.className='pick-body'+(pick?'':' empty-slot');
+
+  if(pick){
+    body.innerHTML='<span class="pick-player">'+pick.player+'</span>'
+      +'<span class="pick-pos">'+pick.position+'</span>'
+      +(cond?'<span class="condition-badge" title="Branch trigger: if '+cond.type+'='+cond.value+' → '+getBranchName(cond.targetBranch)+'">⚡ '+getBranchName(cond.targetBranch)+'</span>':'');
+  } else {
+    body.innerHTML='<span class="drop-text">← Drop a player here, or double-click one in the list</span>';
+  }
+
+  // Actions
+  var actions=document.createElement('div');
+  actions.className='pick-actions';
+
+  if(pick){
+    // Condition button
+    var condBtn=document.createElement('button');
+    condBtn.className='pick-btn'+(cond?' btn-warn':'');
+    condBtn.title='Add / edit branch condition on this pick';
+    condBtn.innerHTML='⚡';
+    condBtn.style.color=cond?'var(--warn)':'var(--muted)';
+    condBtn.addEventListener('click',function(e){e.stopPropagation();toggleConditionPanel(overall);});
+    actions.appendChild(condBtn);
+
+    // Clear button
+    var rmBtn=document.createElement('button');
+    rmBtn.className='pick-btn rm';
+    rmBtn.title='Clear this pick';
+    rmBtn.innerHTML='✕';
+    rmBtn.addEventListener('click',function(e){e.stopPropagation();clearActivePick(overall);markUnsaved();renderAll();});
+    actions.appendChild(rmBtn);
+  }
+
+  card.appendChild(bar);
+  card.appendChild(numCol);
+  card.appendChild(body);
+  card.appendChild(actions);
+  return card;
+}
+
+function getBranchName(id){ return branches[id]?branches[id].name:id; }
+
+// ── Condition panel ────────────────────────────────────────────
+function toggleConditionPanel(overall){
+  if(openConditionSlot===overall){ closeConditionPanel(); return; }
+  openConditionSlot=overall;
+  renderBoard(); // rebuilds with panel open
+  // Scroll panel into view
+  var el=g('cp-'+overall);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closeConditionPanel(){ openConditionSlot=null; renderBoard(); }
+
+function buildConditionPanel(slot){
+  var overall=slot.overall;
+  var pick=getActivePick(overall);
+  var panel=document.createElement('div');
+  panel.className='condition-panel'+(openConditionSlot===overall?' open':'');
+  panel.id='cp-'+overall;
+  if(!pick||openConditionSlot!==overall) return panel;
+
+  var existingCond = getCondition(overall);
+  var otherBranches = Object.values(branches).filter(function(b){ return b.id!==branchFor(overall); });
+
+  // Selected branch
+  var selectedTarget = existingCond ? existingCond.targetBranch : (otherBranches[0]?otherBranches[0].id:'');
+  var condType  = existingCond ? existingCond.type  : 'position';
+  var condValue = existingCond ? existingCond.value : pick.position;
+
+  panel.innerHTML='<div class="cp-title">⚡ Branch Trigger — Pick #'+overall+'</div>'
+    +'<div class="cp-intro">Set a condition: <em>if this pick meets the condition</em>, all future auto-picks switch to a different plan. Leave this blank if you just want this pick and the next picks in the same plan.</div>'
+    +'<div class="cp-row">'
+      +'<span class="cp-label">If pick is</span>'
+      +'<select class="cp-select" id="ctype-'+overall+'">'
+        +'<option value="position"'+(condType==='position'?' selected':'')+'>a specific position</option>'
+        +'<option value="player"'+(condType==='player'?' selected':'')+'>this specific player</option>'
+        +'<option value="any"'+(condType==='any'?' selected':'')+'>anything (always trigger)</option>'
+      +'</select>'
+      +'<input class="cp-input" id="cval-'+overall+'" placeholder="e.g. QB" value="'+condValue+'" style="display:'+(condType==='any'?'none':'block')+'">'
+    +'</div>'
+    +'<div style="font-size:0.78rem;color:var(--muted2);margin-bottom:0.6rem;font-weight:600">…then switch future picks to:</div>';
+
+  if(otherBranches.length){
+    var grid=document.createElement('div'); grid.className='cp-branch-grid';
+    otherBranches.forEach(function(b){
+      var opt=document.createElement('div');
+      opt.className='cp-branch-opt'+(selectedTarget===b.id?' selected':'');
+      setBranchCSS(opt, b);
+      opt.dataset.bid=b.id;
+      opt.innerHTML='<div class="bdot"></div>'+b.name;
+      opt.addEventListener('click',function(){
+        grid.querySelectorAll('.cp-branch-opt').forEach(function(o){o.classList.remove('selected')});
+        opt.classList.add('selected');
+        selectedTarget=b.id;
+      });
+      grid.appendChild(opt);
+    });
+    panel.appendChild(grid);
+  } else {
+    panel.innerHTML+='<div style="font-size:0.8rem;color:var(--muted2);margin-bottom:0.75rem;padding:0.6rem;background:var(--surface3);border-radius:7px">No other branches yet. Create one first using "+ New branch" above, then come back here.</div>';
+  }
+
+  // Or create new branch inline
+  var orNew=document.createElement('div'); orNew.className='cp-or-new';
+  orNew.innerHTML='<span>Or create a new branch:</span><input class="cp-new-branch-inp" id="cnew-'+overall+'" placeholder="Branch name…"><button class="btn btn-sm" id="cnewbtn-'+overall+'">Create & select</button>';
+  panel.appendChild(orNew);
+
+  // Actions
+  var actRow=document.createElement('div'); actRow.className='cp-actions';
+  var saveBtn=document.createElement('button'); saveBtn.className='btn btn-warn btn-sm'; saveBtn.textContent='Set trigger';
+  var clearBtn=document.createElement('button'); clearBtn.className='btn btn-sm'; clearBtn.textContent='Remove trigger';
+  var cancelBtn=document.createElement('button'); cancelBtn.className='btn btn-sm'; cancelBtn.textContent='Close';
+  var savedLbl=document.createElement('span'); savedLbl.className='cp-saved'; savedLbl.id='cpsaved-'+overall; savedLbl.textContent='✓ Saved';
+
+  cancelBtn.addEventListener('click',function(){closeConditionPanel();});
+  clearBtn.addEventListener('click',function(){clearCondition(overall);closeConditionPanel();markUnsaved();renderAll();toast('Trigger removed');});
+
+  saveBtn.addEventListener('click',function(){
+    if(!selectedTarget){ toast('Select a target branch first','error'); return; }
+    var type=g('ctype-'+overall).value;
+    var value=type==='any'?'':g('cval-'+overall).value.trim();
+    setCondition(overall, type, value, selectedTarget);
+    savedLbl.classList.add('show'); setTimeout(function(){savedLbl.classList.remove('show')},2000);
+    markUnsaved(); renderAll();
+    toast('Trigger set — future picks will follow "'+getBranchName(selectedTarget)+'"','info');
+  });
+
+  actRow.appendChild(saveBtn); actRow.appendChild(clearBtn); actRow.appendChild(cancelBtn); actRow.appendChild(savedLbl);
+  panel.appendChild(actRow);
+
+  // Wire type select
+  panel.querySelector('#ctype-'+overall).addEventListener('change',function(){
+    var inp=g('cval-'+overall);
+    if(inp) inp.style.display=this.value==='any'?'none':'block';
+  });
+
+  // Wire create new branch
+  var newBtn=panel.querySelector('#cnewbtn-'+overall);
+  if(newBtn) newBtn.addEventListener('click',function(){
+    var name=(g('cnew-'+overall)||{}).value&&g('cnew-'+overall).value.trim();
+    if(!name){toast('Enter a branch name','error');return;}
+    var idx=Object.keys(branches).length;
+    var id='b_'+Date.now();
+    branches[id]={id:id,name:name,color:BC[idx%BC.length],colorRgb:BC_RGB[idx%BC_RGB.length],picks:{},conditions:{}};
+    selectedTarget=id;
+    markUnsaved();
+    // Re-render panel with new branch visible
+    openConditionSlot=overall; renderAll();
+    toast('Branch "'+name+'" created','info');
+  });
+
+  return panel;
+}
+
+// ── Player list ────────────────────────────────────────────────
+function renderPlayerList(){
+  var c=g('player-list'); c.innerHTML='';
+  var q=(g('player-search').value||'').toLowerCase();
+  var list=allPlayers.filter(function(p){
+    return (!q||(p.name||'').toLowerCase().includes(q)||(p.position||'').toLowerCase().includes(q));
+  });
+  var available=0;
+  list.forEach(function(p,i){
+    var used=isUsed(p.name)||draftedPlayers[p.name];
+    if(!used) available++;
+    var div=document.createElement('div');
+    div.className='player-item'+(used?' used':'');
+    div.draggable=!used;
+    div.dataset.name=p.name; div.dataset.pos=p.position||'';
+    div.innerHTML='<span class="pi-rank">'+(i+1)+'</span><span class="pi-name">'+p.name+'</span><span class="pi-pos">'+(p.position||'—')+'</span>';
+    div.addEventListener('dragstart',function(e){ draggedPlayer={name:p.name,position:p.position||''}; div.classList.add('dragging'); e.dataTransfer.effectAllowed='copy'; });
+    div.addEventListener('dragend',function(){div.classList.remove('dragging')});
+    div.addEventListener('dblclick',function(){
+      if(used) return;
+      var next=mySlots.find(function(s){return !getActivePick(s.overall)});
+      if(!next){toast('All your pick slots are filled','info');return;}
+      setActivePick(next.overall,p.name,p.position||'');
+      markUnsaved(); renderAll();
+    });
+    c.appendChild(div);
+  });
+  g('avail-count').textContent=available+' available';
+}
+g('player-search').addEventListener('input',renderPlayerList);
+
+// ── Save / unsaved ─────────────────────────────────────────────
+function markUnsaved(){
+  g('save-status').textContent='Unsaved changes';
+  g('save-status').classList.remove('saved');
+}
+function doSave(){
+  db.ref('mockDraft/'+gmDiv+'/'+gmSlot).set({branches:branches,updatedAt:Date.now()})
+    .then(function(){
+      g('save-status').textContent='Saved ✓ — '+countPicks()+' picks';
+      g('save-status').classList.add('saved');
+      toast('Mock draft saved!');
+    })
+    .catch(function(e){toast('Save failed: '+e.message,'error')});
+}
+g('btn-save').addEventListener('click',doSave);
+g('btn-save2').addEventListener('click',doSave);
+g('btn-clear').addEventListener('click',function(){
+  if(!confirm('Clear all picks on the current branch "'+getBranchName(activeBranchId)+'"?')) return;
+  var b=branches[activeBranchId]; if(!b) return;
+  b.picks={}; b.conditions={};
+  closeConditionPanel(); markUnsaved(); renderAll(); toast('Board cleared');
+});
+
+// ── Preview logic ──────────────────────────────────────────────
+function doPreview(){
+  var lines=['Auto-select preview','─'.repeat(44),'Starting on: '+getBranchName('default'),''];
+  var cur='default';
+  mySlots.forEach(function(s){
+    var b=branches[cur];
+    var pk=b&&b.picks&&b.picks[s.overall];
+    var cond=b&&b.conditions&&b.conditions[s.overall];
+    lines.push('Pick #'+s.overall+' (Rd'+s.round+'): '+(pk?pk.player+' ('+pk.position+')':'[no pick queued — will skip/manual]'));
+    if(cond&&pk){
+      var matchDesc=cond.type==='any'?'always':cond.type+' = "'+cond.value+'"';
+      lines.push('  ⚡ IF '+matchDesc+' → switch to "'+getBranchName(cond.targetBranch)+'"');
+      // Simulate: the condition will have been met if we actually picked this player
+      cur=cond.targetBranch;
+    }
+  });
+  alert(lines.join('\n'));
+}
+g('btn-preview').addEventListener('click',doPreview);
+g('btn-preview2').addEventListener('click',doPreview);
+</script>
+</body>
+</html>

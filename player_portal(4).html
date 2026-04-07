@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FFA Player Portal 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#0b0d13;--surface:#13161f;--surface2:#191d2b;--surface3:#222838;--border:rgba(255,255,255,0.07);--border-md:rgba(255,255,255,0.12);--border-hi:rgba(255,255,255,0.2);--text:#e6e9f2;--muted:#525a72;--muted2:#7a849e;--accent:#38bdf8;--accent2:#7dd3fc;--mens:#f97316;--womens:#a78bfa;--success:#22c55e;--danger:#ef4444;--warn:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+
+/* NAV HEADER */
+.site-header{background:var(--surface);border-bottom:1px solid var(--border-md);padding:0.8rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-shrink:0;text-decoration:none;cursor:pointer;transition:background 0.15s}
+.site-header:hover{background:var(--surface2)}
+.site-header-logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.1em;background:linear-gradient(90deg,var(--mens),var(--accent),var(--womens));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.site-header-sub{font-size:0.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:0.1em}
+.site-header-back{margin-left:auto;font-size:0.75rem;color:var(--muted2);display:flex;align-items:center;gap:4px}
+
+/* GATE */
+.gate{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:1.5rem}
+.gate-card{background:var(--surface);border:1px solid var(--border-md);border-radius:14px;padding:2rem;width:100%;max-width:420px}
+.gate-card h2{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--accent);letter-spacing:0.07em;margin-bottom:0.35rem}
+.gate-card p{font-size:0.82rem;color:var(--muted2);margin-bottom:1.5rem;line-height:1.6}
+.gate-search{width:100%;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.7rem 1rem;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.95rem;outline:none;transition:border-color 0.15s;margin-bottom:0.6rem}
+.gate-search:focus{border-color:var(--accent)}
+.search-results{max-height:220px;overflow-y:auto;display:none;margin-bottom:0.6rem;background:var(--surface2);border:1px solid var(--border-md);border-radius:8px}
+.search-result-item{padding:0.65rem 1rem;cursor:pointer;display:flex;align-items:center;gap:0.75rem;transition:background 0.1s;border-bottom:1px solid var(--border)}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:hover{background:var(--surface3)}
+.sri-avatar{width:34px;height:34px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;color:var(--muted2);flex-shrink:0}
+.sri-name{font-weight:500;font-size:0.88rem}
+.sri-meta{font-size:0.73rem;color:var(--muted2)}
+.divider{text-align:center;color:var(--muted);font-size:0.73rem;margin:0.5rem 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:44%;height:1px;background:var(--border-md)}
+.divider::before{left:0}.divider::after{right:0}
+.pin-input{width:100%;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.65rem 1rem;border-radius:8px;font-family:'DM Mono',monospace;font-size:1.3rem;letter-spacing:0.25em;text-align:center;outline:none;transition:border-color 0.15s;margin-bottom:0.6rem}
+.pin-input:focus{border-color:var(--accent)}
+.gate-error{font-size:0.78rem;color:var(--danger);min-height:1.1em;margin-bottom:0.5rem;text-align:center}
+
+/* TAB NAV inside portal */
+.portal{display:none;flex:1;flex-direction:column}
+.portal-tabs{background:var(--surface);border-bottom:1px solid var(--border-md);display:flex;padding:0 1.5rem;gap:2px}
+.ptab{padding:0.75rem 1.1rem;font-size:0.85rem;cursor:pointer;color:var(--muted2);border-bottom:2px solid transparent;transition:all 0.12s;white-space:nowrap}
+.ptab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.ptab:hover{color:var(--text)}
+.portal-body{flex:1;overflow-y:auto;padding:1.5rem;max-width:800px;margin:0 auto;width:100%}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* Player header */
+.player-header{background:var(--surface);border:1px solid var(--border-md);border-radius:12px;padding:1.5rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.5rem}
+.player-avatar-lg{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--surface3),var(--surface2));display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;color:var(--muted2);flex-shrink:0;border:2px solid var(--border-md);overflow:hidden}
+.player-avatar-lg img{width:100%;height:100%;object-fit:cover}
+.player-header-name{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.05em;line-height:1}
+.player-header-meta{font-size:0.8rem;color:var(--muted2);margin-top:4px}
+.div-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-left:7px;vertical-align:middle}
+.status-pill{padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:500;margin-top:6px;display:inline-block}
+.available{background:rgba(34,197,94,0.1);color:var(--success);border:1px solid rgba(34,197,94,0.3)}
+.drafted{background:rgba(56,189,248,0.1);color:var(--accent);border:1px solid rgba(56,189,248,0.3)}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border-md);border-radius:12px;padding:1.35rem;margin-bottom:1.1rem}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.06em;color:var(--accent);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem;justify-content:space-between}
+.save-ok{font-size:0.75rem;color:var(--success);opacity:0;transition:opacity 0.3s;font-family:'DM Sans',sans-serif;font-weight:400;letter-spacing:0}
+.save-ok.show{opacity:1}
+
+/* Forms */
+.field{margin-bottom:0.9rem}
+.field label{display:block;font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted2);margin-bottom:0.38rem;font-weight:500}
+.field input,.field select,.field textarea{width:100%;background:var(--surface2);border:1px solid var(--border-md);color:var(--text);padding:0.52rem 0.85rem;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:0.87rem;outline:none;transition:border-color 0.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:100px;line-height:1.6}
+.field input:disabled{opacity:0.45;cursor:not-allowed}
+.hint{font-size:0.71rem;color:var(--muted);margin-top:0.28rem}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem}
+@media(max-width:540px){.two-col{grid-template-columns:1fr}}
+.char-count{font-size:0.7rem;color:var(--muted);text-align:right;margin-top:0.25rem}
+
+/* Buttons */
+.btn{padding:0.48rem 1rem;border-radius:7px;border:1px solid var(--border-hi);background:transparent;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.83rem;cursor:pointer;transition:all 0.14s;font-weight:500}
+.btn:hover{background:var(--surface2);border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:700}
+.btn-primary:hover{background:var(--accent2);border-color:var(--accent2)}
+.btn-sm{padding:0.32rem 0.72rem;font-size:0.77rem}
+.btn-success{border-color:var(--success);color:var(--success)}
+.btn-success:hover{background:rgba(34,197,94,0.1)}
+.btn-warn{border-color:var(--warn);color:var(--warn)}
+.btn-warn:hover{background:rgba(245,158,11,0.1)}
+.btn-danger{border-color:var(--danger);color:var(--danger)}
+.btn-danger:hover{background:rgba(239,68,68,0.1)}
+.btn-row{display:flex;gap:0.55rem;flex-wrap:wrap;align-items:center}
+.save-btn{width:100%;padding:0.65rem;margin-top:0.5rem}
+
+/* Film */
+.film-list{display:flex;flex-direction:column;gap:0.55rem;margin-bottom:0.9rem}
+.film-item{display:flex;align-items:center;gap:0.6rem;background:var(--surface2);border:1px solid var(--border-md);border-radius:8px;padding:0.55rem 0.85rem}
+.film-item input{flex:1;background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.84rem;outline:none}
+.film-type-badge{font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(56,189,248,0.1);color:var(--accent);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap}
+.film-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:0 2px;transition:color 0.12s}
+.film-remove:hover{color:var(--danger)}
+
+/* ── MOCK DRAFT ── */
+.mock-layout{display:grid;grid-template-columns:260px 1fr;gap:1rem;min-height:400px}
+@media(max-width:640px){.mock-layout{grid-template-columns:1fr}}
+.mock-sidebar{background:var(--surface);border:1px solid var(--border-md);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;max-height:600px}
+.mock-sidebar-title{padding:0.65rem 0.85rem;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted2);font-weight:500;border-bottom:1px solid var(--border-md);display:flex;align-items:center;justify-content:space-between}
+.mock-search{padding:0.55rem 0.85rem;border-bottom:1px solid var(--border-md)}
+.mock-search input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.38rem 0.65rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.8rem;outline:none}
+.mock-search input:focus{border-color:var(--accent)}
+.mock-player-list{flex:1;overflow-y:auto}
+.mock-player-item{padding:0.48rem 0.85rem;cursor:grab;display:flex;align-items:center;gap:0.5rem;border-bottom:1px solid var(--border);transition:background 0.1s;user-select:none}
+.mock-player-item:hover{background:var(--surface2)}
+.mock-player-item.used{opacity:0.38;pointer-events:none}
+.mock-player-item.dragging{opacity:0.45}
+.mpi-name{flex:1;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mpi-pos{font-size:0.68rem;color:var(--accent);font-weight:700;min-width:28px;text-align:right}
+.mock-board{flex:1;display:flex;flex-direction:column;gap:0.5rem}
+.mock-round-label{font-family:'Bebas Neue',sans-serif;font-size:0.82rem;letter-spacing:0.06em;color:var(--muted2);padding:0.25rem 0;border-bottom:1px solid var(--border);margin-bottom:0.25rem;margin-top:0.5rem}
+.mock-round-label:first-child{margin-top:0}
+.mock-slot{background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:0.6rem 0.85rem;display:flex;align-items:center;gap:0.6rem;min-height:50px;transition:all 0.12s;cursor:pointer}
+.mock-slot:hover{border-color:var(--border-hi)}
+.mock-slot.drop-target{border-color:var(--accent);background:rgba(56,189,248,0.07);transform:scale(1.01)}
+.mock-slot.filled{background:rgba(56,189,248,0.05);border-color:rgba(56,189,248,0.2)}
+.ms-num{font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace;min-width:32px}
+.ms-player{flex:1;font-size:0.85rem;font-weight:500;min-width:0}
+.ms-pos{font-size:0.7rem;color:var(--accent);min-width:28px;text-align:right}
+.ms-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;padding:0;transition:color 0.12s;line-height:1}
+.ms-remove:hover{color:var(--danger)}
+.ms-empty{font-size:0.75rem;color:var(--muted)}
+.mock-export-bar{background:var(--surface);border:1px solid var(--border-md);border-radius:10px;padding:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap}
+.mock-export-bar span{font-size:0.82rem;color:var(--muted2);flex:1}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border-md);border-radius:8px;padding:0.75rem 1.1rem;font-size:0.83rem;z-index:999;transform:translateY(3rem);opacity:0;transition:all 0.25s;max-width:300px;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.info{border-left:3px solid var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- NAV HEADER -->
+<a class="site-header" href="index.html">
+  <div>
+    <div class="site-header-logo">FFA Draft 2026</div>
+    <div class="site-header-sub">Player Portal</div>
+  </div>
+  <div class="site-header-back">← Home</div>
+</a>
+
+<!-- GATE -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <h2>Player Portal</h2>
+    <p>Find your name, then enter your PIN to access your profile, film links and mock draft tool.</p>
+    <input class="gate-search" id="gate-search" placeholder="Search your name…" oninput="searchPlayers(this.value)" autocomplete="off">
+    <div class="search-results" id="search-results"></div>
+    <div class="divider">then enter your PIN</div>
+    <input class="pin-input" type="password" id="gate-pin" placeholder="PIN" maxlength="6" onkeydown="if(event.key==='Enter')verifyPin()">
+    <div class="gate-error" id="gate-error"></div>
+    <button class="btn btn-primary" style="width:100%;padding:0.65rem" onclick="verifyPin()">Access My Profile</button>
+  </div>
+</div>
+
+<!-- PORTAL -->
+<div class="portal" id="portal">
+  <div class="portal-tabs">
+    <div class="ptab active" onclick="switchTab(this,'profile')">👤 Profile</div>
+    <div class="ptab" onclick="switchTab(this,'film')">🎬 Film</div>
+    <div class="ptab" onclick="switchTab(this,'availability')">📅 Availability</div>
+    <div class="ptab" onclick="switchTab(this,'mockdraft')">🧠 Mock Draft</div>
+  </div>
+  <div class="portal-body">
+
+    <!-- PLAYER HEADER -->
+    <div class="player-header" id="player-header">
+      <div class="player-avatar-lg" id="avatar-lg">??</div>
+      <div>
+        <div class="player-header-name" id="ph-name">Loading…</div>
+        <div class="player-header-meta" id="ph-meta"></div>
+        <div id="ph-status"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE TAB -->
+    <div class="tab-pane active" id="pane-profile">
+      <div class="card">
+        <div class="card-title">Basic Info <span class="save-ok" id="ok-info">✓ Saved</span></div>
+        <div class="two-col">
+          <div class="field"><label>Full Name</label><input type="text" id="f-name" placeholder="Your full name"></div>
+          <div class="field"><label>Preferred Name / Nickname</label><input type="text" id="f-nick" placeholder="Optional"></div>
+        </div>
+        <div class="two-col">
+          <div class="field"><label>Primary Position</label>
+            <select id="f-pos"><option value="">Select…</option><optgroup label="Offense"><option>QB</option><option>WR</option><option>RB</option><option>TE</option><option>Center</option></optgroup><optgroup label="Defense"><option>CB</option><option>Safety</option><option>LB</option><option>DE</option></optgroup><optgroup label="Special"><option>Athlete</option><option>Two-Way</option></optgroup></select>
+          </div>
+          <div class="field"><label>Secondary Position</label>
+            <select id="f-pos2"><option value="">None</option><optgroup label="Offense"><option>QB</option><option>WR</option><option>RB</option><option>TE</option><option>Center</option></optgroup><optgroup label="Defense"><option>CB</option><option>Safety</option><option>LB</option><option>DE</option></optgroup><optgroup label="Special"><option>Athlete</option><option>Two-Way</option></optgroup></select>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="field"><label>Height</label><input type="text" id="f-height" placeholder="e.g. 5'11&quot;"></div>
+          <div class="field"><label>Years Playing Flag</label><input type="text" id="f-exp" placeholder="e.g. 3 years"></div>
+        </div>
+        <div class="field"><label>Profile Photo URL</label><input type="url" id="f-photo" placeholder="https://…" oninput="previewPhoto(this.value)"><div class="hint">Link a photo (Google Drive, Imgur, etc.) — visible to GMs</div><img id="photo-prev" style="display:none;width:64px;height:64px;border-radius:50%;object-fit:cover;margin-top:0.6rem;border:2px solid var(--border-md)" alt=""></div>
+        <button class="btn btn-primary save-btn" onclick="saveSection('info')">Save Basic Info</button>
+      </div>
+      <div class="card">
+        <div class="card-title">About Me <span class="save-ok" id="ok-about">✓ Saved</span></div>
+        <div class="field"><label>Bio</label><textarea id="f-bio" maxlength="500" placeholder="Tell GMs about yourself — background, playing style, what makes you a great pick…" oninput="cc('bio-cc',this.value,500)"></textarea><div class="char-count"><span id="bio-cc">0</span>/500</div></div>
+        <div class="two-col">
+          <div class="field"><label>Hometown / State</label><input type="text" id="f-home" placeholder="e.g. Brisbane, QLD"></div>
+          <div class="field"><label>Other Sports</label><input type="text" id="f-sports" placeholder="e.g. AFL, Touch Football…"></div>
+        </div>
+        <button class="btn btn-primary save-btn" onclick="saveSection('about')">Save About Me</button>
+      </div>
+    </div>
+
+    <!-- FILM TAB -->
+    <div class="tab-pane" id="pane-film">
+      <div class="card">
+        <div class="card-title">Game Film <span class="save-ok" id="ok-film">✓ Saved</span></div>
+        <p style="font-size:0.82rem;color:var(--muted2);margin-bottom:1rem;line-height:1.55">Add links to footage — YouTube, Hudl, Google Drive, Dropbox, etc. GMs can watch before and during the draft.</p>
+        <div class="film-list" id="film-list"></div>
+        <div class="btn-row" style="margin-bottom:1rem">
+          <button class="btn btn-sm" onclick="addFilm('Highlight')">+ Highlight</button>
+          <button class="btn btn-sm" onclick="addFilm('Game')">+ Full Game</button>
+          <button class="btn btn-sm" onclick="addFilm('Training')">+ Training</button>
+          <button class="btn btn-sm" onclick="addFilm('Other')">+ Other</button>
+        </div>
+        <button class="btn btn-primary save-btn" onclick="saveSection('film')">Save Film Links</button>
+      </div>
+    </div>
+
+    <!-- AVAILABILITY TAB -->
+    <div class="tab-pane" id="pane-availability">
+      <div class="card">
+        <div class="card-title">Draft Night Availability <span class="save-ok" id="ok-avail">✓ Saved</span></div>
+        <div class="field"><label>Will you be available on draft night?</label>
+          <select id="f-avail">
+            <option value="yes">Yes — I'll be online for the whole draft</option>
+            <option value="partial">Partially — online for some of it</option>
+            <option value="no">No — my mock draft queue will handle my picks</option>
+          </select>
+        </div>
+        <div class="field"><label>Notes for your GM</label><textarea id="f-avail-notes" maxlength="300" placeholder="Any notes about availability, needs, preferences…" style="min-height:80px" oninput="cc('avail-cc',this.value,300)"></textarea><div class="char-count"><span id="avail-cc">0</span>/300</div></div>
+        <button class="btn btn-primary save-btn" onclick="saveSection('avail')">Save Availability</button>
+      </div>
+    </div>
+
+    <!-- MOCK DRAFT TAB -->
+    <div class="tab-pane" id="pane-mockdraft">
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-title">My Mock Draft</div>
+        <p style="font-size:0.82rem;color:var(--muted2);margin-bottom:1rem;line-height:1.55">Build your personal ideal draft. Drag players from the left onto pick slots, or double-click any player to fill the next empty slot. <strong style="color:var(--text)">This draft is not stored on the server</strong> — export it as CSV or print it before leaving.</p>
+        <div class="mock-export-bar">
+          <span id="mock-summary">0 players queued</span>
+          <button class="btn btn-success btn-sm" onclick="exportMockCSV()">⬇ Export CSV</button>
+          <button class="btn btn-sm" onclick="exportMockText()">📋 Copy as Text</button>
+          <button class="btn btn-sm" onclick="printMock()">🖨 Print</button>
+          <button class="btn btn-danger btn-sm" onclick="clearMock()">Clear</button>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>Division to draft from</label>
+          <select id="mock-div" onchange="initMockBoard()">
+            <option value="mens">Men's</option>
+            <option value="womens">Women's</option>
+          </select>
+        </div>
+      </div>
+      <div class="mock-layout" id="mock-layout">
+        <div class="mock-sidebar">
+          <div class="mock-sidebar-title">
+            <span>Available Players</span>
+            <span id="mock-avail-count" style="font-size:0.7rem"></span>
+          </div>
+          <div class="mock-search"><input id="mock-search" placeholder="Filter…" oninput="filterMockPlayers(this.value)"></div>
+          <div class="mock-player-list" id="mock-player-list"></div>
+        </div>
+        <div class="mock-board" id="mock-board"></div>
+      </div>
+    </div>
+
+  </div><!-- /portal-body -->
+</div><!-- /portal -->
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const fb = initializeApp({apiKey:"AIzaSyCFdWwwTdPi42oAntUszwWFQL4WFaJS9IQ",databaseURL:"https://ffa-draft-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ffa-draft",appId:"1:849324499106:web:9893151b2298198fe437fb"});
+const db = getDatabase(fb);
+
+// ── STATE ──────────────────────────────────────────────────
+let currentPlayer = null;
+let allPlayers = [];
+let filmLinks = [];
+let mockSlots = []; // [{round, pick, player, position}]
+let mockAllPlayers = [];
+let draggedMockPlayer = null;
+
+// ── HELPERS ────────────────────────────────────────────────
+const sha16 = async t => {const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,16)};
+const ini = n => (n||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+window.cc = (id,v,max) => {const e=document.getElementById(id);if(e)e.textContent=v.length;};
+window.toast = (m,t='success') => {const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t+' show';setTimeout(()=>el.classList.remove('show'),3000)};
+
+// ── TABS ───────────────────────────────────────────────────
+window.switchTab = (el, id) => {
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pane-'+id).classList.add('active');
+  if(id==='mockdraft') initMockBoard();
+};
+
+// ── GATE ───────────────────────────────────────────────────
+window.searchPlayers = async q => {
+  const res = document.getElementById('search-results');
+  if(q.length < 2){res.style.display='none';return;}
+  if(!allPlayers.length){
+    const snap = await get(ref(db,'players'));
+    allPlayers = snap.val() ? Object.values(snap.val()) : [];
+  }
+  const matches = allPlayers.filter(p=>(p.name||'').toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  if(!matches.length){res.style.display='none';return;}
+  res.style.display='block';
+  res.innerHTML = matches.map(p=>`<div class="search-result-item" onclick="selectPlayer('${p.id}')">
+    <div class="sri-avatar">${ini(p.name)}</div>
+    <div><div class="sri-name">${p.name}</div><div class="sri-meta">${p.position||'No position'} · ${p.division||'—'}</div></div>
+  </div>`).join('');
+};
+
+window.selectPlayer = id => {
+  currentPlayer = allPlayers.find(p=>p.id===id);
+  if(!currentPlayer)return;
+  document.getElementById('gate-search').value=currentPlayer.name;
+  document.getElementById('search-results').style.display='none';
+  document.getElementById('gate-pin').focus();
+};
+
+window.verifyPin = async () => {
+  if(!currentPlayer){document.getElementById('gate-error').textContent='Select your name first.';return;}
+  const v = document.getElementById('gate-pin').value.trim();
+  if(!v){document.getElementById('gate-error').textContent='Enter your PIN.';return;}
+  const snap = await get(ref(db,'players/'+currentPlayer.id+'/pinHash'));
+  const stored = snap.val();
+  const h = await sha16(v);
+  const def = await sha16('1234');
+  const adminSnap = await get(ref(db,'pins/admin'));
+  const adminHash = adminSnap.val()||'9d45a4710a9abc4e';
+  if((!stored && h===def) || h===stored || h===adminHash){
+    document.getElementById('gate').style.display='none';
+    document.getElementById('portal').style.display='flex';
+    loadPortal();
+  } else {
+    document.getElementById('gate-error').textContent='Incorrect PIN. Contact admin if needed.';
+    document.getElementById('gate-pin').value='';
+  }
+};
+
+// ── LOAD ───────────────────────────────────────────────────
+function loadPortal(){
+  const p = currentPlayer;
+  const initials = ini(p.name);
+  document.getElementById('avatar-lg').textContent=initials;
+  document.getElementById('ph-name').textContent=p.name||'Unknown';
+  const dc = p.division==='mens'?'#f97316':'#a78bfa';
+  document.getElementById('ph-meta').innerHTML=`${p.position||'No position'} <span class="div-badge" style="background:${dc}22;color:${dc};border:1px solid ${dc}44">${p.division||'—'}</span>`;
+  document.getElementById('ph-status').innerHTML=p.drafted
+    ?`<span class="status-pill drafted">✓ Drafted</span>`
+    :`<span class="status-pill available">● Available</span>`;
+
+  get(ref(db,'playerProfiles/'+p.id)).then(snap=>{
+    const pr=snap.val()||{};
+    document.getElementById('f-name').value=p.name||'';
+    document.getElementById('f-nick').value=pr.nickname||'';
+    document.getElementById('f-pos').value=p.position||'';
+    document.getElementById('f-pos2').value=pr.position2||'';
+    document.getElementById('f-height').value=pr.height||'';
+    document.getElementById('f-exp').value=pr.experience||'';
+    document.getElementById('f-photo').value=pr.photo||'';
+    document.getElementById('f-bio').value=pr.bio||'';
+    document.getElementById('f-home').value=pr.hometown||'';
+    document.getElementById('f-sports').value=pr.sports||'';
+    document.getElementById('f-avail').value=pr.availability||'yes';
+    document.getElementById('f-avail-notes').value=pr.availNotes||'';
+    cc('bio-cc',pr.bio||'',500);
+    cc('avail-cc',pr.availNotes||'',300);
+    if(pr.photo)previewPhoto(pr.photo);
+    filmLinks=pr.filmLinks||[];
+    renderFilm();
+  });
+
+  if(p.drafted){
+    document.querySelectorAll('#pane-profile input,#pane-profile textarea,#pane-profile select,#pane-film input').forEach(el=>el.disabled=true);
+  }
+
+  // Set mock div to player's division
+  document.getElementById('mock-div').value = p.division||'mens';
+}
+
+// ── SAVE ───────────────────────────────────────────────────
+window.saveSection = async sec => {
+  if(!currentPlayer)return;
+  let data={};
+  if(sec==='info'){data={nickname:document.getElementById('f-nick').value,position:document.getElementById('f-pos').value,position2:document.getElementById('f-pos2').value,height:document.getElementById('f-height').value,experience:document.getElementById('f-exp').value,photo:document.getElementById('f-photo').value};
+    await set(ref(db,'players/'+currentPlayer.id+'/position'),data.position);}
+  if(sec==='about')data={bio:document.getElementById('f-bio').value,hometown:document.getElementById('f-home').value,sports:document.getElementById('f-sports').value};
+  if(sec==='film')data={filmLinks};
+  if(sec==='avail')data={availability:document.getElementById('f-avail').value,availNotes:document.getElementById('f-avail-notes').value};
+  const snap=await get(ref(db,'playerProfiles/'+currentPlayer.id));
+  const ex=snap.val()||{};
+  await set(ref(db,'playerProfiles/'+currentPlayer.id),{...ex,...data,updatedAt:Date.now()});
+  showOk(sec==='info'?'ok-info':sec==='about'?'ok-about':sec==='film'?'ok-film':'ok-avail');
+  toast('Saved!');
+};
+const showOk = id=>{const e=document.getElementById(id);if(!e)return;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2500)};
+
+// ── PHOTO ──────────────────────────────────────────────────
+window.previewPhoto = url => {
+  const img=document.getElementById('photo-prev');
+  if(url&&url.startsWith('http')){img.style.display='block';img.src=url;img.onerror=()=>img.style.display='none';}
+  else img.style.display='none';
+};
+
+// ── FILM ───────────────────────────────────────────────────
+function renderFilm(){
+  const c=document.getElementById('film-list');c.innerHTML='';
+  filmLinks.forEach((f,i)=>{
+    const div=document.createElement('div');div.className='film-item';
+    div.innerHTML=`<span class="film-type-badge">${f.type}</span>
+      <input value="${f.url||''}" placeholder="https://…" oninput="filmLinks[${i}].url=this.value">
+      <input value="${f.label||''}" placeholder="Label" style="max-width:130px;background:transparent;border:none;color:var(--muted2);font-size:0.77rem;outline:none" oninput="filmLinks[${i}].label=this.value">
+      <button class="film-remove" onclick="removeFilm(${i})">✕</button>`;
+    c.appendChild(div);
+  });
+}
+window.addFilm = type=>{filmLinks.push({type,url:'',label:''});renderFilm();};
+window.removeFilm = i=>{filmLinks.splice(i,1);renderFilm();};
+
+// ══════════════════════════════════════════════════════════
+//  MOCK DRAFT
+// ══════════════════════════════════════════════════════════
+
+const DEFAULT_ROUNDS = 10;
+
+window.initMockBoard = async () => {
+  const div = document.getElementById('mock-div').value;
+  // Load players for this division
+  const snap = await get(ref(db,'players'));
+  const allP = snap.val() ? Object.values(snap.val()) : [];
+  mockAllPlayers = allP.filter(p=>p.division===div).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+
+  // Build slots: one per round (round 1–10 for mens, 1–11 for womens)
+  const rounds = div==='womens'?11:10;
+  if(!mockSlots.length || mockSlots.length !== rounds){
+    mockSlots = Array.from({length:rounds},(_,i)=>({round:i+1,player:'',position:''}));
+  }
+
+  renderMockPlayers();
+  renderMockBoard();
+};
+
+function renderMockPlayers(){
+  const c=document.getElementById('mock-player-list');
+  const q=(document.getElementById('mock-search')?.value||'').toLowerCase();
+  const usedNames=new Set(mockSlots.filter(s=>s.player).map(s=>s.player.toLowerCase()));
+  const list=mockAllPlayers.filter(p=>(!q||(p.name||'').toLowerCase().includes(q)||(p.position||'').toLowerCase().includes(q)));
+  c.innerHTML='';
+  list.forEach(p=>{
+    const div=document.createElement('div');
+    const used=usedNames.has((p.name||'').toLowerCase());
+    div.className='mock-player-item'+(used?' used':'');
+    div.draggable=!used;
+    div.dataset.name=p.name;div.dataset.pos=p.position||'';
+    div.innerHTML=`<span class="mpi-name">${p.name}</span><span class="mpi-pos">${p.position||'—'}</span>`;
+    div.addEventListener('dragstart',e=>{draggedMockPlayer={name:p.name,position:p.position||''};div.classList.add('dragging');e.dataTransfer.effectAllowed='copy';});
+    div.addEventListener('dragend',()=>div.classList.remove('dragging'));
+    div.addEventListener('dblclick',()=>{
+      const next=mockSlots.findIndex(s=>!s.player);
+      if(next>=0){mockSlots[next].player=p.name;mockSlots[next].position=p.position||'';renderMockBoard();renderMockPlayers();updateMockSummary();}
+    });
+    c.appendChild(div);
+  });
+  const avail=list.filter(p=>!usedNames.has((p.name||'').toLowerCase())).length;
+  document.getElementById('mock-avail-count').textContent=avail+' available';
+}
+window.filterMockPlayers = ()=>renderMockPlayers();
+
+function renderMockBoard(){
+  const board=document.getElementById('mock-board');
+  board.innerHTML='';
+  mockSlots.forEach((slot,i)=>{
+    const label=document.createElement('div');
+    label.className='mock-round-label';
+    label.textContent='Round '+(i+1);
+    board.appendChild(label);
+
+    const cell=document.createElement('div');
+    cell.className='mock-slot'+(slot.player?' filled':'');
+    cell.dataset.idx=i;
+    cell.innerHTML=slot.player
+      ?`<span class="ms-num">Rd ${i+1}</span><span class="ms-player">${slot.player}</span><span class="ms-pos">${slot.position}</span><button class="ms-remove" onclick="clearMockSlot(${i});event.stopPropagation()">✕</button>`
+      :`<span class="ms-num">Rd ${i+1}</span><span class="ms-empty">Drop player here or double-click in list</span>`;
+
+    cell.addEventListener('dragover',e=>{e.preventDefault();cell.classList.add('drop-target');});
+    cell.addEventListener('dragleave',()=>cell.classList.remove('drop-target'));
+    cell.addEventListener('drop',e=>{
+      e.preventDefault();cell.classList.remove('drop-target');
+      if(draggedMockPlayer){mockSlots[i].player=draggedMockPlayer.name;mockSlots[i].position=draggedMockPlayer.position;draggedMockPlayer=null;renderMockBoard();renderMockPlayers();updateMockSummary();}
+    });
+    board.appendChild(cell);
+  });
+  updateMockSummary();
+}
+
+window.clearMockSlot = i=>{mockSlots[i].player='';mockSlots[i].position='';renderMockBoard();renderMockPlayers();};
+window.clearMock = ()=>{if(confirm('Clear all mock draft picks?')){mockSlots.forEach(s=>{s.player='';s.position='';});renderMockBoard();renderMockPlayers();}};
+
+function updateMockSummary(){
+  const n=mockSlots.filter(s=>s.player).length;
+  document.getElementById('mock-summary').textContent=n+' player'+(n!==1?'s':'')+' queued out of '+mockSlots.length+' rounds';
+}
+
+// ── EXPORT ─────────────────────────────────────────────────
+window.exportMockCSV = () => {
+  const rows=[['Round','Player','Position'],...mockSlots.map((s,i)=>[i+1,s.player||'(empty)',s.position||''])];
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=(currentPlayer?.name||'player').replace(/\s+/g,'_')+'_mock_draft.csv';
+  a.click();
+  toast('CSV exported!','success');
+};
+
+window.exportMockText = () => {
+  const name=currentPlayer?.name||'Player';
+  const lines=[name+"'s Mock Draft — FFA 2026",'─'.repeat(40),...mockSlots.map((s,i)=>`Round ${i+1}: ${s.player||'(empty)'}${s.position?' ('+s.position+')':''}`)];
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast('Copied to clipboard!','success'));
+};
+
+window.printMock = () => {
+  const name=currentPlayer?.name||'Player';
+  const rows=mockSlots.map((s,i)=>`<tr><td>${i+1}</td><td>${s.player||'—'}</td><td>${s.position||'—'}</td></tr>`).join('');
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>${name}'s Mock Draft</title><style>body{font-family:sans-serif;padding:2rem}h2{margin-bottom:1rem}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px 12px;text-align:left}th{background:#f5f5f5}</style></head><body><h2>${name}'s Mock Draft — FFA Draft 2026</h2><table><thead><tr><th>Round</th><th>Player</th><th>Position</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+  w.print();
+};
+</script>
+</body>
+</html>
